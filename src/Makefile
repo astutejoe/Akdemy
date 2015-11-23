@@ -12,7 +12,7 @@ debug: clean
 	gcc $(CFLAGS) -D DEBUG -o $(EXEC) $(OBJ)
 
 run:
-	./$(EXEC) ../examples/fibonacci.ak out.exe
+	./$(EXEC) ../examples/fibonacci.ak out.asm
 
 clean:
 	touch x.o
