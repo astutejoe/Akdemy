@@ -2,7 +2,7 @@ int t1 = 1, t2 = 1, tmp, n, i = 2;
 string nome;
 
 begin
-   writeln, "Escreva um numero de 5 a 12: ";
+   writeln, "Escreva o numero de termos: ";
    readln, n;
    write, "[", t1, ",", t2, ",";
    while i < n

@@ -1,16 +1,23 @@
 CC = gcc
-CFLAGS = -std=c99 -D DEBUG
+CFLAGS = -std=c99
 OBJ = lex.o main.o table.o
+EXEC = akc
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+all: clean
+	$(CC) $(CFLAGS) -c *.c
+	gcc $(CFLAGS) -o $(EXEC) $(OBJ)
 
-all: $(OBJ)
-	gcc $(CFLAGS) -o ml $^
+debug: clean
+	$(CC) -D DEBUG $(CFLAGS) -c *.c
+	gcc $(CFLAGS) -D DEBUG -o $(EXEC) $(OBJ)
 
 run:
-	./ml ../examples/fibonacci.l out.o
+	./$(EXEC) ../examples/fibonacci.ak out.exe
 
 clean:
+	touch x.o
+	touch $(EXEC)
+	touch x.exe
 	rm *.o
-	rm ml
+	rm $(EXEC)
+	rm *.exe

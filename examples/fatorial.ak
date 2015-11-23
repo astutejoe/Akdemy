@@ -1,7 +1,7 @@
 int i;
 
 begin
-   writeln, "Escreva um número: ";
+   writeln, "Escreva um numero: ";
    readln, i;
    while i > 1
    begin
