@@ -1,8 +1,9 @@
-int i;
+int i, a;
 
 begin
    writeln, "Escreva um numero: ";
-   readln, i;
+   readln, a;
+   i = a;
    while i > 1
    begin
       a = a * (i - 1);
