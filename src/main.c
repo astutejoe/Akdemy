@@ -471,7 +471,7 @@ void command()
 	}
 	else if(reg.token == READLN)
 	{
-		matchToken(READLN);\
+		matchToken(READLN);
 
 		int buffer = newTemporary(BUFFER);
 
