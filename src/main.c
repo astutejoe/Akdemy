@@ -471,8 +471,7 @@ void command()
 	}
 	else if(reg.token == READLN)
 	{
-		matchToken(READLN);
-		matchToken(COMMA);
+		matchToken(READLN);\
 
 		int buffer = newTemporary(BUFFER);
 
@@ -568,7 +567,6 @@ void command()
 	else if (reg.token == WRITE)
 	{
 		matchToken(WRITE);
-		matchToken(COMMA);
 		int tmpStack = stack;
 		expr(&type, &address);
 
@@ -776,7 +774,6 @@ void command()
 	else
 	{
 		matchToken(WRITELN);
-		matchToken(COMMA);
 
 		int tmpStack = stack;
 
