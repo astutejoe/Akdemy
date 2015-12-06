@@ -59,7 +59,7 @@
 #define DIGITS 10
 #define SYMBOLS 11
 #define HALFSYMBOLS 4
-#define OTHERS 17
+#define OTHERS 18
 #define HEXAC 16
 
 /* TYPES */
