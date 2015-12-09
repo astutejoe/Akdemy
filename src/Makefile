@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -lm
+CFLAGS = -std=c99 -lm -DDEBUG
 OBJ = lex.o main.o table.o
 EXEC = akc
 
@@ -12,7 +12,7 @@ debug: clean
 	gcc $(CFLAGS) -D DEBUG -o $(EXEC) $(OBJ)
 
 run:
-	./$(EXEC) ../examples/fibonacci.ak out.asm
+	./$(EXEC) ../examples/hello.ak out.asm
 	nasm -felf64 out.asm
 	ld out.o -o out
 

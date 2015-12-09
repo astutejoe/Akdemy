@@ -1,7 +1,7 @@
 section	.data
 	endl:	 db 0x0A
 section	.bss
-	tmp:	resb 8388608
+	temporaries:	resb 8388608
 	y:	resb 65536
 section	.text
 global	_start
@@ -36,15 +36,15 @@ R2:
 	mov ecx, [y+ebx]
 	cmp ecx, 0x00
 	je R1
-	mov [tmp+eax], ecx
+	mov [temporaries+eax], ecx
 	add eax, 1
 	add ebx, 1
 	jmp R2
 R1:
-	mov [tmp+eax], ecx
+	mov [temporaries+eax], ecx
 	mov eax, 4
 	mov ebx, 1
-	mov ecx, tmp+0
+	mov ecx, temporaries+0
 	mov edx, 7
 	int 0x80
 	mov eax, 4
