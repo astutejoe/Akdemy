@@ -17,7 +17,7 @@
 #define LASTCHAR 122
 #define ENOF -1
 #define HASHSIZE (MAX * LASTCHAR)
-#define STACKBASE 0x100
+#define STACKBASE 0x0
 
 #define VAR "classe-var"
 #define CONST "classe-const"

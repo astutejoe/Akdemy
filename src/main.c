@@ -22,6 +22,7 @@ void D(int*, int*);
 
 FILE* output;
 char attribuitions[500000];
+char variables[500000];
 
 int label = 1;
 int stack = STACKBASE;
@@ -49,16 +50,18 @@ void S()
 {
 	unsigned int address = 0x4000;
 
-	fprintf(output, "sseg SEGMENT STACK\n\tbyte 4000h DUP(?)\nsseg ENDS\n\ndseg SEGMENT PUBLIC\n\tbyte 4000h DUP(?)\n");
+	fprintf(output, "section	.data\n\tendl:\t db 0x0A\n");
 	while (reg.token != BEGIN)
 	{
 		declaration(&address);
 	}
-	fprintf(output, "dseg ENDS\n\ncseg SEGMENT PUBLIC\n\tASSUME CS:cseg, DS:dseg\n\nstrt:\n");
+	fprintf(output, "section	.bss\n\ttmp:\tresb 4294967296\n");
+	fprintf(output, "%s", variables);
+	fprintf(output, "section	.text\nglobal	_start\n_start:\n");
 	fprintf(output,  "%s", attribuitions);
 
 	block();
-	fprintf(output, "\tmov ah, 4Ch\n\tint 21h\ncseg ENDS\nEND strt");
+	fprintf(output, "\tmov eax, 0x01\n\tint 0x80");
 }
 
 void declaration(unsigned int* address)
@@ -87,26 +90,22 @@ void declaration(unsigned int* address)
 			case STRINGTOK:
 				reg.entry->type=STR;
 				type = STR;
-				fprintf(output, "\tbyte 100h DUP(?)\n");
-				*address = *address + 0x100;
+				sprintf(variables, "%s\t%s:\tresb 65536\n", variables, reg.lexem);
 				break;
 			case INTTOK:
 				reg.entry->type=INT;
 				type=INT;
-				fprintf(output, "\tsword ?\n");
-				*address = *address + 2;
+				sprintf(variables, "%s\t%s:\tresw 1\n", variables, reg.lexem);
 				break;
 			case BYTETOK:
 				reg.entry->type=BYTE;
 				type=BYTE;
-				fprintf(output, "\tbyte ?\n");
-				*address = *address + 1;
+				sprintf(variables, "%s\t%s:\tresb 1\n", variables, reg.lexem);
 				break;
 			default:
 				reg.entry->type=BOOL;
 				type=BOOL;
-				fprintf(output, "\tbyte ?\n");
-				*address = *address + 1;
+				sprintf(variables, "%s\t%s:\tresb 1\n", variables, reg.lexem);
 				break;
 		}
 
@@ -148,11 +147,11 @@ void declaration(unsigned int* address)
 				sprintf(attribuitions, "%s\tmov al, 24h\n", attribuitions);
 				sprintf(attribuitions, "%s\tmov DS:[bx], al\n", attribuitions);
 			} else if (type == INT) {
-				sprintf(attribuitions, "%s\tmov ax, %s%d\n\tmov DS:[%u], ax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->address);
+				sprintf(attribuitions, "%s\tmov ax, %s%d\n\tmov [tmp+%u], ax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->address);
 			} else if (type == BYTE) {
-				sprintf(attribuitions, "%s\tmov al, %d\n\tmov DS:[%u], al\n", attribuitions, atoi(reg.lexem), entry->address);
+				sprintf(attribuitions, "%s\tmov al, %d\n\tmov [tmp+%u], al\n", attribuitions, atoi(reg.lexem), entry->address);
 			} else if (type == BOOL) {
-				sprintf(attribuitions, "%s\tmov al, %d\n\tmov DS:[%u], al\n", attribuitions, strncmp(reg.lexem,"TRUE", 4) == 0 ? 0xFF : 0x00, entry->address);
+				sprintf(attribuitions, "%s\tmov al, %d\n\tmov [tmp+%u], al\n", attribuitions, strncmp(reg.lexem,"TRUE", 4) == 0 ? 0xFF : 0x00, entry->address);
 			}
 
 			matchToken(LITERAL);
@@ -175,16 +174,14 @@ void declaration(unsigned int* address)
 			switch(type)
 			{
 				case STR:
-					fprintf(output, "\tbyte 100h DUP(?)\n");
-					*address = *address + 0x100;
+					sprintf(variables, "%s\t%s:\tresb 65536\n", variables, reg.lexem);
 					break;
 				case INT:
-					fprintf(output, "\tsword ?\n");
+					sprintf(variables, "%s\t%s:\tresw 1\n", variables, reg.lexem);
 					*address = *address + 2;
 					break;
 				default:
-					fprintf(output, "\tbyte ?\n");
-					*address = *address + 1;
+					sprintf(variables, "%s\t%s:\tresb 1\n", variables, reg.lexem);
 					break;
 			}
 
@@ -226,11 +223,11 @@ void declaration(unsigned int* address)
 					sprintf(attribuitions, "%s\tmov al, 24h\n", attribuitions);
 					sprintf(attribuitions, "%s\tmov DS:[bx], al\n", attribuitions);
 				} else if (type == INT) {
-					sprintf(attribuitions, "%s\tmov ax, %s%d\n\tmov DS:[%u], ax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->address);
+					sprintf(attribuitions, "%s\tmov ax, %s%d\n\tmov [tmp+%u], ax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->address);
 				} else if (type == BYTE) {
-					sprintf(attribuitions, "%s\tmov al, %d\n\tmov DS:[%u], al\n", attribuitions, atoi(reg.lexem), entry->address);
+					sprintf(attribuitions, "%s\tmov al, %d\n\tmov [tmp+%u], al\n", attribuitions, atoi(reg.lexem), entry->address);
 				} else if (type == BOOL) {
-					sprintf(attribuitions, "%s\tmov al, %d\n\tmov DS:[%u], al\n", attribuitions, strncmp(reg.lexem,"TRUE", 4) == 0 ? 0xFF : 0x00, entry->address);
+					sprintf(attribuitions, "%s\tmov al, %d\n\tmov [tmp+%u], al\n", attribuitions, strncmp(reg.lexem,"TRUE", 4) == 0 ? 0xFF : 0x00, entry->address);
 				}
 
 				matchToken(LITERAL);
@@ -278,20 +275,21 @@ void declaration(unsigned int* address)
 
 		switch(reg.type) {
 			case STR:
-				reg.lexem[strlen(reg.lexem)-1] = '$';
-				fprintf(output, "\tbyte %s\"\n", reg.lexem);
+				reg.lexem[0] = '\'';
+				reg.lexem[strlen(reg.lexem)-1] = '\'';
+				fprintf(output, "\t%s:\tdb %s,0\n", entry->lexem, reg.lexem);
 				*address = *address + strlen(reg.lexem);
 				break;
 			case BYTE:
-				fprintf(output, "\tbyte %u\n", atoi(reg.lexem));
+				fprintf(output, "\t%s:\tdb %u\n", entry->lexem, atoi(reg.lexem));
 				*address = *address + 1;
 				break;
 			case BOOL:
-				fprintf(output, "\tbyte %u\n", (strncmp(reg.lexem, "TRUE", 4) == 0 ? 0xFF : 0x00));
+				fprintf(output, "\t%s:\tdb %u\n", entry->lexem, (strncmp(reg.lexem, "TRUE", 4) == 0 ? 0xFF : 0x00));
 				*address = *address + 1;
 				break;
 			default:
-				fprintf(output, "\tsword %s%d\n", (signal == MINUS ? "-" : "+"), atoi(reg.lexem));
+				fprintf(output, "\t%s:\tdw %s%d\n", entry->lexem, (signal == MINUS ? "-" : "+"), atoi(reg.lexem));
 				*address = *address + 2;
 				break;
 		}
@@ -348,17 +346,17 @@ void command()
 		if (entry->type == INT) {
 			if (type == INT) 
 			{
-				fprintf(output, "\tmov al, DS:[%u]\n", address);
-				fprintf(output, "\tmov ah, DS:[%u]\n", address+1);
-				fprintf(output, "\tmov DS:[%u], al\n", entry->address);
-				fprintf(output, "\tmov DS:[%u], ah\n", entry->address+1);
+				fprintf(output, "\tmov al, [tmp+%u]\n", address);
+				fprintf(output, "\tmov ah, [tmp+%u]\n", address+1);
+				fprintf(output, "\tmov [tmp+%u], al\n", entry->address);
+				fprintf(output, "\tmov [tmp+%u], ah\n", entry->address+1);
 			}
 			else
 			{
-				fprintf(output, "\tmov al, DS:[%u]\n", address);
+				fprintf(output, "\tmov al, [tmp+%u]\n", address);
 				fprintf(output, "\tmov ah, 0\n");
-				fprintf(output, "\tmov DS:[%u], al\n", entry->address);
-				fprintf(output, "\tmov DS:[%u], ah\n", entry->address+1);
+				fprintf(output, "\tmov [tmp+%u], al\n", entry->address);
+				fprintf(output, "\tmov [tmp+%u], ah\n", entry->address+1);
 			}
 		} else if (entry->type == STR) {
 			fprintf(output, "\tmov bx, %u\n", address);
@@ -376,7 +374,7 @@ void command()
 			fprintf(output, "%s:\n", end);
 			fprintf(output, "\tmov DS:[di], cl\n");
 		} else {
-			fprintf(output, "\tmov al, DS:[%u]\n\tmov DS:[%u], al\n", address, entry->address);
+			fprintf(output, "\tmov al, [tmp+%u]\n\tmov [tmp+%u], al\n", address, entry->address);
 		}
 
 		matchToken(SEMICOLON);
@@ -404,7 +402,7 @@ void command()
 			exit(INCOMPATIBLETYPES);
 		}
 
-		fprintf(output, "\tmov al, DS:[%u]\n", address);
+		fprintf(output, "\tmov al, [tmp+%u]\n", address);
 		fprintf(output, "\tmov ah, 0\n");
 		fprintf(output, "\tcmp ax, 0\n");
 		fprintf(output, "\tje %s\n", end);
@@ -435,7 +433,7 @@ void command()
 			exit(INCOMPATIBLETYPES);
 		}
 
-		fprintf(output, "\tmov al, DS:[%u]\n", address);
+		fprintf(output, "\tmov al, [tmp+%u]\n", address);
 		fprintf(output, "\tmov ah, 0\n");
 		fprintf(output, "\tcmp ax, 0\n");
 		fprintf(output, "\tje %s\n", false);
@@ -477,7 +475,7 @@ void command()
 
 		fprintf(output, "\tmov dx, %u\n", buffer);
 		fprintf(output, "\tmov al, 0FFh\n");
-		fprintf(output, "\tmov DS:[%u], al\n", buffer);
+		fprintf(output, "\tmov [tmp+%u], al\n", buffer);
 		fprintf(output, "\tmov ah, 0Ah\n");
 		fprintf(output, "\tint 21h\n");
 		fprintf(output, "\tmov ah, 02h\n");
@@ -521,7 +519,7 @@ void command()
 			fprintf(output, "\tadd di, 1\n");
 			fprintf(output, "\tjmp %s\n", loop);
 			fprintf(output, "%s:\n", end);
-			fprintf(output, "\tmov DS:[%u], al\n", reg.entry->address);
+			fprintf(output, "\tmov [tmp+%u], al\n", reg.entry->address);
 		}
 		else if (reg.type == INT)
 		{
@@ -554,8 +552,8 @@ void command()
 			fprintf(output, "%s:\n", end);
 			fprintf(output, "\tpop cx\n");
 			fprintf(output, "\timul cx\n");
-			fprintf(output, "\tmov DS:[%u], al\n", reg.entry->address);
-			fprintf(output, "\tmov DS:[%u], ah\n", reg.entry->address+1);
+			fprintf(output, "\tmov [tmp+%u], al\n", reg.entry->address);
+			fprintf(output, "\tmov [tmp+%u], ah\n", reg.entry->address+1);
 		}
 
 		matchToken(ID);
@@ -571,19 +569,21 @@ void command()
 		expr(&type, &address);
 
 		if (type == STR) {
-			fprintf(output, "\tmov dx, %u\n", address);
-			fprintf(output, "\tmov ah, 09h\n");
-			fprintf(output, "\tint 21h\n");
+			fprintf(output, "\tmov eax, 4\n");
+			fprintf(output, "\tmov ebx, 1\n");
+			fprintf(output, "\tmov ecx, tmp+%u\n", address);
+			fprintf(output, "\tmov edx, 7\n");
+			fprintf(output, "\tint 0x80\n");
 		} else if (type == INT || type == BYTE) {
 			int tmpString = newTemporary(STR);
 			char* positive = newLabel();
 			char* digits = newLabel();
 			char* printing = newLabel();
 			fprintf(output, "\tmov di, %u\n", tmpString);
-			fprintf(output, "\tmov al, DS:[%u]\n", address);
+			fprintf(output, "\tmov al, [tmp+%u]\n", address);
 
 			if (type == INT)
-				fprintf(output, "\tmov ah, DS:[%u]\n", address+1);
+				fprintf(output, "\tmov ah, [tmp+%u]\n", address+1);
 			else
 				fprintf(output, "\tmov ah, 0\n");
 
@@ -620,7 +620,7 @@ void command()
 			char* true = newLabel();
 			char* print = newLabel();
 			int tmpOut = newTemporary(STR);
-			fprintf(output, "\tmov al, DS:[%u]\n", address);
+			fprintf(output, "\tmov al, [tmp+%u]\n", address);
 			fprintf(output, "\tcmp al, 0\n");
 			fprintf(output, "\tjne %s\n", true);
 			fprintf(output, "\tmov di, %u\n", tmpOut);
@@ -670,19 +670,21 @@ void command()
 			expr(&type, &address);
 
 			if (type == STR) {
-				fprintf(output, "\tmov dx, %u\n", address);
-				fprintf(output, "\tmov ah, 09h\n");
-				fprintf(output, "\tint 21h\n");
+				fprintf(output, "\tmov eax, 4\n");
+				fprintf(output, "\tmov ebx, 1\n");
+				fprintf(output, "\tmov ecx, tmp+%u\n", address);
+				fprintf(output, "\tmov edx, 7\n");
+				fprintf(output, "\tint 0x80\n");
 			} else if (type == INT || type == BYTE) {
 				int tmpString = newTemporary(STR);
 				char* positive = newLabel();
 				char* digits = newLabel();
 				char* printing = newLabel();
 				fprintf(output, "\tmov di, %u\n", tmpString);
-				fprintf(output, "\tmov al, DS:[%u]\n", address);
+				fprintf(output, "\tmov al, [tmp+%u]\n", address);
 
 				if (type == INT)
-					fprintf(output, "\tmov ah, DS:[%u]\n", address+1);
+					fprintf(output, "\tmov ah, [tmp+%u]\n", address+1);
 				else
 					fprintf(output, "\tmov ah, 0\n");
 
@@ -719,7 +721,7 @@ void command()
 				char* true = newLabel();
 				char* print = newLabel();
 				int tmpOut = newTemporary(STR);
-				fprintf(output, "\tmov al, DS:[%u]\n", address);
+				fprintf(output, "\tmov al, [tmp+%u]\n", address);
 				fprintf(output, "\tcmp al, 0\n");
 				fprintf(output, "\tjne %s\n", true);
 				fprintf(output, "\tmov di, %u\n", tmpOut);
@@ -780,19 +782,21 @@ void command()
 		expr(&type, &address);
 
 		if (type == STR) {
-			fprintf(output, "\tmov dx, %u\n", address);
-			fprintf(output, "\tmov ah, 09h\n");
-			fprintf(output, "\tint 21h\n");
+			fprintf(output, "\tmov eax, 4\n");
+			fprintf(output, "\tmov ebx, 1\n");
+			fprintf(output, "\tmov ecx, tmp+%u\n", address);
+			fprintf(output, "\tmov edx, 7\n");
+			fprintf(output, "\tint 0x80\n");
 		} else if (type == INT || type == BYTE) {
 			int tmpString = newTemporary(STR);
 			char* positive = newLabel();
 			char* digits = newLabel();
 			char* printing = newLabel();
 			fprintf(output, "\tmov di, %u\n", tmpString);
-			fprintf(output, "\tmov al, DS:[%u]\n", address);
+			fprintf(output, "\tmov al, [tmp+%u]\n", address);
 
 			if (type == INT)
-				fprintf(output, "\tmov ah, DS:[%u]\n", address+1);
+				fprintf(output, "\tmov ah, [tmp+%u]\n", address+1);
 			else
 				fprintf(output, "\tmov ah, 0\n");
 
@@ -829,7 +833,7 @@ void command()
 			char* true = newLabel();
 			char* print = newLabel();
 			int tmpOut = newTemporary(STR);
-			fprintf(output, "\tmov al, DS:[%u]\n", address);
+			fprintf(output, "\tmov al, [tmp+%u]\n", address);
 			fprintf(output, "\tcmp al, 0\n");
 			fprintf(output, "\tjne %s\n", true);
 			fprintf(output, "\tmov di, %u\n", tmpOut);
@@ -879,19 +883,21 @@ void command()
 			expr(&type, &address);
 
 			if (type == STR) {
-				fprintf(output, "\tmov dx, %u\n", address);
-				fprintf(output, "\tmov ah, 09h\n");
-				fprintf(output, "\tint 21h\n");
+				fprintf(output, "\tmov eax, 4\n");
+				fprintf(output, "\tmov ebx, 1\n");
+				fprintf(output, "\tmov ecx, tmp+%u\n", address);
+				fprintf(output, "\tmov edx, 7\n");
+				fprintf(output, "\tint 0x80\n");
 			} else if (type == INT || type == BYTE) {
 				int tmpString = newTemporary(STR);
 				char* positive = newLabel();
 				char* digits = newLabel();
 				char* printing = newLabel();
 				fprintf(output, "\tmov di, %u\n", tmpString);
-				fprintf(output, "\tmov al, DS:[%u]\n", address);
+				fprintf(output, "\tmov al, [tmp+%u]\n", address);
 
 				if (type == INT)
-					fprintf(output, "\tmov ah, DS:[%u]\n", address+1);
+					fprintf(output, "\tmov ah, [tmp+%u]\n", address+1);
 				else
 					fprintf(output, "\tmov ah, 0\n");
 
@@ -928,7 +934,7 @@ void command()
 				char* true = newLabel();
 				char* print = newLabel();
 				int tmpOut = newTemporary(STR);
-				fprintf(output, "\tmov al, DS:[%u]\n", address);
+				fprintf(output, "\tmov al, [tmp+%u]\n", address);
 				fprintf(output, "\tcmp al, 0\n");
 				fprintf(output, "\tjne %s\n", true);
 				fprintf(output, "\tmov di, %u\n", tmpOut);
@@ -975,12 +981,11 @@ void command()
 
 		matchToken(SEMICOLON);
 
-
-		fprintf(output, "\tmov ah, 02h\n");
-		fprintf(output, "\tmov dl, 0Dh\n");
-		fprintf(output, "\tint 21h\n");
-		fprintf(output, "\tmov dl, 0Ah\n");
-		fprintf(output, "\tint 21h\n");
+		fprintf(output, "\tmov eax, 4\n");
+		fprintf(output, "\tmov ebx, 1\n");
+		fprintf(output, "\tmov ecx, endl\n");
+		fprintf(output, "\tmov edx, 1\n");
+		fprintf(output, "\tint 0x80\n");
 #ifdef DEBUG
 	printf("\n");
 #endif
@@ -1042,8 +1047,8 @@ void expr(int* type, int* address)
 				case EQUAL:
 					if (*type == BOOL)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tcmp al, bl\n");
 						fprintf(output, "\tje %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1051,14 +1056,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (*type == INT || *type == BYTE)
 					{
 						if (firstExprType == BYTE && *type == BYTE)
 						{
-							fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-							fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+							fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+							fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 							fprintf(output, "\tcmp al, bl\n");
 							fprintf(output, "\tje %s\n", true);
 							fprintf(output, "\tmov al, 0\n");
@@ -1066,13 +1071,13 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov DS:[%u], al\n", *address);
+							fprintf(output, "\tmov %s, al\n", label);
 						}
 						else if (firstExprType == INT && *type == BYTE)
 						{
-							fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-							fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-							fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+							fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+							fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+							fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 							fprintf(output, "\tmov bh, 0\n");
 							fprintf(output, "\tcmp ax, bx\n");
 							fprintf(output, "\tje %s\n", true);
@@ -1081,14 +1086,14 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov DS:[%u], al\n", *address);
+							fprintf(output, "\tmov %s, al\n", label);
 						}
 						else if (firstExprType == BYTE && *type == INT)
 						{
-							fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+							fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 							fprintf(output, "\tmov ah, 0\n");
-							fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-							fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+							fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+							fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 							fprintf(output, "\tcmp ax, bx\n");
 							fprintf(output, "\tje %s\n", true);
 							fprintf(output, "\tmov al, 0\n");
@@ -1096,14 +1101,14 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov DS:[%u], al\n", *address);
+							fprintf(output, "\tmov [tmp+%u], al\n", label);
 						}
 						else
 						{
-							fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-							fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-							fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-							fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+							fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+							fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+							fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+							fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 							fprintf(output, "\tcmp ax, bx\n");
 							fprintf(output, "\tje %s\n", true);
 							fprintf(output, "\tmov al, 0\n");
@@ -1111,7 +1116,7 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov DS:[%u], al\n", *address);
+							fprintf(output, "\tmov %s, al\n", label);
 						}
 					}
 					else
@@ -1121,8 +1126,8 @@ void expr(int* type, int* address)
 						char* iterate = newLabel();
 						char* firstended = newLabel();
 						char* end = newLabel();
-						fprintf(output, "\tmov di, %u\n", firstExprAdd);
-						fprintf(output, "\tmov bx, %u\n", *address);
+						fprintf(output, "\tmov di, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov bx, [tmp+%u]\n", *address);
 						fprintf(output, "%s:\n", iterate);
 						fprintf(output, "\tmov al, DS:[di]\n");
 						fprintf(output, "\tmov ah, 0\n");
@@ -1139,11 +1144,11 @@ void expr(int* type, int* address)
 						fprintf(output, "\tjmp %s\n", iterate);
 						fprintf(output, "%s:\n", equal);
 						fprintf(output, "\tmov al, 255\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 						fprintf(output, "\tjmp %s\n", end);
 						fprintf(output, "%s:\n", notequal);
 						fprintf(output, "\tmov al, 0\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 						fprintf(output, "\tjmp %s\n", end);
 						fprintf(output, "%s:\n", firstended);
 						fprintf(output, "\tmov al, DS:[bx]\n");
@@ -1155,8 +1160,8 @@ void expr(int* type, int* address)
 				case DIFF:
 					if (*type == BOOL)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tcmp al, bl\n");
 						fprintf(output, "\tjne %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1164,14 +1169,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (*type == INT || *type == BYTE)
 					{
 						if (firstExprType == BYTE && *type == BYTE)
 						{
-							fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-							fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+							fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+							fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 							fprintf(output, "\tcmp al, bl\n");
 							fprintf(output, "\tjne %s\n", true);
 							fprintf(output, "\tmov al, 0\n");
@@ -1179,13 +1184,13 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov DS:[%u], al\n", *address);
+							fprintf(output, "\tmov %s, al\n", label);
 						}
 						else if (firstExprType == INT && *type == BYTE)
 						{
-							fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-							fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-							fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+							fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+							fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+							fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 							fprintf(output, "\tmov bh, 0\n");
 							fprintf(output, "\tcmp ax, bx\n");
 							fprintf(output, "\tjne %s\n", true);
@@ -1194,14 +1199,14 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov DS:[%u], al\n", *address);
+							fprintf(output, "\tmov %s, al\n", label);
 						}
 						else if (firstExprType == BYTE && *type == INT)
 						{
-							fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+							fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 							fprintf(output, "\tmov ah, 0\n");
-							fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-							fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+							fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+							fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 							fprintf(output, "\tcmp ax, bx\n");
 							fprintf(output, "\tjne %s\n", true);
 							fprintf(output, "\tmov al, 0\n");
@@ -1209,14 +1214,14 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov DS:[%u], al\n", *address);
+							fprintf(output, "\tmov %s, al\n", label);
 						}
 						else
 						{
-							fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-							fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-							fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-							fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+							fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+							fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+							fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+							fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 							fprintf(output, "\tcmp ax, bx\n");
 							fprintf(output, "\tjne %s\n", true);
 							fprintf(output, "\tmov al, 0\n");
@@ -1224,15 +1229,15 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov DS:[%u], al\n", *address);
+							fprintf(output, "\tmov %s, al\n", label);
 						}
 					}
 					break;
 				case MINOR:
 					if (firstExprType == BYTE && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tcmp al, bl\n");
 						fprintf(output, "\tjl %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1240,13 +1245,13 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjl %s\n", true);
@@ -1255,14 +1260,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == BYTE && *type == INT)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 						fprintf(output, "\tmov ah, 0\n");
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjl %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1270,14 +1275,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjl %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1285,14 +1290,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					break;
 				case GREATER:
 					if (firstExprType == BYTE && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tcmp al, bl\n");
 						fprintf(output, "\tjg %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1300,13 +1305,13 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjg %s\n", true);
@@ -1315,14 +1320,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == BYTE && *type == INT)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 						fprintf(output, "\tmov ah, 0\n");
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjg %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1330,14 +1335,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjg %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1345,14 +1350,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					break;
 				case MINEQ:
 					if (firstExprType == BYTE && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tcmp al, bl\n");
 						fprintf(output, "\tjle %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1360,13 +1365,13 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjle %s\n", true);
@@ -1375,14 +1380,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == BYTE && *type == INT)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 						fprintf(output, "\tmov ah, 0\n");
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjle %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1390,14 +1395,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjle %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1405,14 +1410,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					break;
 				case GREATEQ:
 					if (firstExprType == BYTE && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tcmp al, bl\n");
 						fprintf(output, "\tjge %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1420,13 +1425,13 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjge %s\n", true);
@@ -1435,14 +1440,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == BYTE && *type == INT)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 						fprintf(output, "\tmov ah, 0\n");
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjge %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1450,14 +1455,14 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tcmp ax, bx\n");
 						fprintf(output, "\tjge %s\n", true);
 						fprintf(output, "\tmov al, 0\n");
@@ -1465,7 +1470,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					break;
 			}
@@ -1499,20 +1504,20 @@ void A(int* type, int* address)
 	{
 		if (*type == INT)
 		{
-			fprintf(output, "\tmov al, DS:[%u]\n", *address);
-			fprintf(output, "\tmov ah, DS:[%u]\n", *address+1);
+			fprintf(output, "\tmov al, [tmp+%u]\n", *address);
+			fprintf(output, "\tmov ah, [tmp+%u]\n", *address+1);
 			fprintf(output, "\tneg ax\n");
-			fprintf(output, "\tmov DS:[%u], al\n", *address);
-			fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+			fprintf(output, "\tmov %s, al\n", *address);
+			fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 		}
 		else if (*type == BYTE)
 		{
-			fprintf(output, "\tmov al, DS:[%u]\n", *address);
+			fprintf(output, "\tmov al, [tmp+%u]\n", *address);
 			fprintf(output, "\tmov ah, 0\n");
 			fprintf(output, "\tneg ax\n");
 			int newLocation = newTemporary(INT);
-			fprintf(output, "\tmov DS:[%u], al\n", newLocation);
-			fprintf(output, "\tmov DS:[%u], ah\n", newLocation+1);
+			fprintf(output, "\tmov [tmp+%u], al\n", newLocation);
+			fprintf(output, "\tmov [tmp+%u], ah\n", newLocation+1);
 			*address = newLocation;
 		}
 		*type = INT;
@@ -1571,41 +1576,41 @@ void A(int* type, int* address)
 			case PLUS:
 				if (firstExprType == BYTE && *type == BYTE)
 				{
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 					fprintf(output, "\tadd al, bl\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
+					fprintf(output, "\tmov %s, al\n", label);
 				}
 				else if (firstExprType == INT && *type == BYTE)
 				{
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-					fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+					fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 					fprintf(output, "\tmov bh, 0\n");
 					fprintf(output, "\tadd ax, bx\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
-					fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 					*type = INT;
 				}
 				else if (firstExprType == BYTE && *type == INT)
 				{
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 					fprintf(output, "\tmov ah, 0\n");
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-					fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+					fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 					fprintf(output, "\tadd ax, bx\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
-					fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 				}
 				else if (firstExprType == INT && *type == INT)
 				{
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-					fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-					fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+					fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+					fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 					fprintf(output, "\tadd ax, bx\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
-					fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 				}
 				else
 				{
@@ -1633,48 +1638,48 @@ void A(int* type, int* address)
 			case MINUS:
 				if (firstExprType == BYTE && *type == BYTE)
 				{
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 					fprintf(output, "\tsub al, bl\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
+					fprintf(output, "\tmov %s, al\n", label);
 				}
 				else if (firstExprType == INT && *type == BYTE)
 				{
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-					fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+					fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 					fprintf(output, "\tmov bh, 0\n");
 					fprintf(output, "\tsub ax, bx\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
-					fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 					*type = INT;
 				}
 				else if (firstExprType == BYTE && *type == INT)
 				{
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 					fprintf(output, "\tmov ah, 0\n");
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-					fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+					fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 					fprintf(output, "\tsub ax, bx\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
-					fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 				}
 				else
 				{
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-					fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-					fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+					fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+					fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 					fprintf(output, "\tsub ax, bx\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
-					fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 				}
 				break;
 			case OR:
-				fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-				fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+				fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+				fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 				fprintf(output, "\tor al, bl\n");
-				fprintf(output, "\tmov DS:[%u], al\n", *address);
+				fprintf(output, "\tmov %s, al\n", label);
 				break;
 		}
 	}
@@ -1716,94 +1721,94 @@ void B(int* type, int* address)
 				case MULT:
 					if (firstExprType == BYTE && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tmul bl\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == INT && *type == INT)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\timul bx\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
-						fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\timul bx\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
-						fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 						*type = INT;
 					}
 					else
 					{
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 						fprintf(output, "\tmov ah, 0\n");
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\timul bx\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
-						fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 					}
 					break;
 				case DIVIDE:
 					if (firstExprType == BYTE && *type == BYTE)
 					{
 						fprintf(output, "\tmov dx, 0\n");
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 						fprintf(output, "\tmov ah, 0\n");
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\tidiv bx\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
+						fprintf(output, "\tmov %s, al\n", label);
 					}
 					else if (firstExprType == INT && *type == INT)
 					{
 						fprintf(output, "\tmov dx, 0\n");
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tidiv bx\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
-						fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
 						fprintf(output, "\tmov dx, 0\n");
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-						fprintf(output, "\tmov ah, DS:[%u]\n", firstExprAdd+1);
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+						fprintf(output, "\tmov ah, [tmp+%u]\n", firstExprAdd+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\tidiv bx\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
-						fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 						*type = INT;
 					}
 					else
 					{
 						fprintf(output, "\tmov dx, 0\n");
-						fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
+						fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
 						fprintf(output, "\tmov ah, 0\n");
-						fprintf(output, "\tmov bl, DS:[%u]\n", *address);
-						fprintf(output, "\tmov bh, DS:[%u]\n", *address+1);
+						fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
+						fprintf(output, "\tmov bh, [tmp+%u]\n", *address+1);
 						fprintf(output, "\tidiv bx\n");
-						fprintf(output, "\tmov DS:[%u], al\n", *address);
-						fprintf(output, "\tmov DS:[%u], ah\n", *address+1);
+						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [tmp+%u], ah\n", *address+1);
 					}
 					break;
 				case AND:
-					fprintf(output, "\tmov al, DS:[%u]\n", firstExprAdd);
-					fprintf(output, "\tmov bl, DS:[%u]\n", *address);
+					fprintf(output, "\tmov al, [tmp+%u]\n", firstExprAdd);
+					fprintf(output, "\tmov bl, [tmp+%u]\n", *address);
 					fprintf(output, "\tand al, bl\n");
-					fprintf(output, "\tmov DS:[%u], al\n", *address);
+					fprintf(output, "\tmov %s, al\n", label);
 					break;
 			}
 		}
@@ -1830,9 +1835,9 @@ void C(int* type, int* address)
 	}
 	else if (not)
 	{
-		fprintf(output, "\tmov al, DS:[%u]\n", *address);
+		fprintf(output, "\tmov al, [tmp+%u]\n", *address);
 		fprintf(output, "\nnot al\n");
-		fprintf(output, "\tmov DS:[%u], al\n", *address);
+		fprintf(output, "\tmov %s, al\n", label);
 	}
 }
 
@@ -1855,8 +1860,8 @@ void D(int* type, int* address)
 		if (*type == INT) {
 			fprintf(output, "\tmov al, %u\n", atoi(reg.lexem) & 0x000000FF);
 			fprintf(output, "\tmov ah, %u\n", (atoi(reg.lexem) & 0x0000FF00) >> 8);
-			fprintf(output, "\tmov DS:[%u], al\n", *address);
-			fprintf(output, "\tmov DS:[%u], ah\n", *address + 1);
+			fprintf(output, "\tmov %s, al\n", label);
+			fprintf(output, "\tmov [tmp+%u], ah\n", *address + 1);
 		} else if (*type == STR) {
 			fprintf(output, "\tmov bx, %u\n", *address);
 			for (int i = 1; i < strlen(reg.lexem)-1; i++) {
@@ -1868,10 +1873,10 @@ void D(int* type, int* address)
 			fprintf(output, "\tmov DS:[bx], al\n");
 		} else if (*type == BYTE) {
 			fprintf(output, "\tmov al, %u\n", atoi(reg.lexem) & 0x000000FF);
-			fprintf(output, "\tmov DS:[%u], al\n", *address);
+			fprintf(output, "\tmov %s, al\n", label);
 		} else {
 			fprintf(output, "\tmov al, %u\n", (strncmp(reg.lexem, "TRUE", 4) == 0 ? 0xFF : 0x00));
-			fprintf(output, "\tmov DS:[%u], al\n", *address);
+			fprintf(output, "\tmov %s, al\n", label);
 		}
 
 		matchToken(LITERAL);
@@ -1884,38 +1889,38 @@ void D(int* type, int* address)
 		}
 
 		*type = reg.entry->type;
-		*address = reg.entry->address;
+		char* varLabel = reg.entry->lexem;
 
 		int temporary = newTemporary(*type);
 
 		if (*type == BYTE || *type == BOOL)
 		{
-			fprintf(output, "\tmov al, DS:[%u]\n", *address);
-			fprintf(output, "\tmov DS:[%u], al\n", temporary);
+			fprintf(output, "\tmov al, [tmp+%u]\n", *address);
+			fprintf(output, "\tmov [tmp+%u], al\n", temporary);
 		}
 		else if (*type == INT)
 		{
-			fprintf(output, "\tmov al, DS:[%u]\n", *address);
-			fprintf(output, "\tmov ah, DS:[%u]\n", *address+1);
-			fprintf(output, "\tmov DS:[%u], al\n", temporary);
-			fprintf(output, "\tmov DS:[%u], ah\n", temporary+1);
+			fprintf(output, "\tmov al, [tmp+%u]\n", *address);
+			fprintf(output, "\tmov ah, [tmp+%u]\n", *address+1);
+			fprintf(output, "\tmov [tmp+%u], al\n", temporary);
+			fprintf(output, "\tmov [tmp+%u], ah\n", temporary+1);
 		}
 		else if (*type == STR)
 		{
 			char* end = newLabel();
 			char* loop = newLabel();
-			fprintf(output, "\tmov di, %u\n", temporary);
-			fprintf(output, "\tmov bx, %u\n", *address);
+			fprintf(output, "\tmov eax, %u\n", temporary);
+			fprintf(output, "\tmov ebx, 0\n");
 			fprintf(output, "%s:\n", loop);
-			fprintf(output, "\tmov al, DS:[bx]\n");
-			fprintf(output, "\tcmp al, 24h\n");
+			fprintf(output, "\tmov ecx, [%s+ebx]\n", varLabel);
+			fprintf(output, "\tcmp ecx, 0x00\n");
 			fprintf(output, "\tje %s\n", end);
-			fprintf(output, "\tmov DS:[di], al\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tadd bx, 1\n");
+			fprintf(output, "\tmov [tmp+eax], ecx\n");
+			fprintf(output, "\tadd eax, 1\n");
+			fprintf(output, "\tadd ebx, 1\n");
 			fprintf(output, "\tjmp %s\n", loop);
 			fprintf(output, "%s:\n", end);
-			fprintf(output, "\tmov DS:[di], al\n");
+			fprintf(output, "\tmov [tmp+eax], ecx\n");
 		}
 
 		*address = temporary;
