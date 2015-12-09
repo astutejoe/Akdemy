@@ -1,11 +1,35 @@
 section	.data
 	endl:	 db 0x0A
-	y:	db 'Gabriel',0
 section	.bss
-	tmp:	resb 4294967296
+	tmp:	resb 8388608
+	y:	resb 65536
 section	.text
 global	_start
 _start:
+	mov ebx, y
+	mov al, 71
+	mov [ebx], al
+	add ebx, 1
+	mov al, 97
+	mov [ebx], al
+	add ebx, 1
+	mov al, 98
+	mov [ebx], al
+	add ebx, 1
+	mov al, 114
+	mov [ebx], al
+	add ebx, 1
+	mov al, 105
+	mov [ebx], al
+	add ebx, 1
+	mov al, 101
+	mov [ebx], al
+	add ebx, 1
+	mov al, 108
+	mov [ebx], al
+	add ebx, 1
+	mov al, 0
+	mov [ebx], al
 	mov eax, 0
 	mov ebx, 0
 R2:

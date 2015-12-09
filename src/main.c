@@ -55,7 +55,7 @@ void S()
 	{
 		declaration(&address);
 	}
-	fprintf(output, "section	.bss\n\ttmp:\tresb 4294967296\n");
+	fprintf(output, "section	.bss\n\ttmp:\tresb 8388608\n");
 	fprintf(output, "%s", variables);
 	fprintf(output, "section	.text\nglobal	_start\n_start:\n");
 	fprintf(output,  "%s", attribuitions);
@@ -138,14 +138,14 @@ void declaration(unsigned int* address)
 			}
 
 			if (type == STR) {
-				sprintf(attribuitions, "%s\tmov bx, %u\n", attribuitions, entry->address);
+				sprintf(attribuitions, "%s\tmov ebx, %s\n", attribuitions, entry->lexem);
 				for (int i = 1; i < strlen(reg.lexem)-1; i++) {
 					sprintf(attribuitions, "%s\tmov al, %u\n", attribuitions, reg.lexem[i]);
-					sprintf(attribuitions, "%s\tmov DS:[bx], al\n", attribuitions);
-					sprintf(attribuitions, "%s\tadd bx, 1\n", attribuitions);
+					sprintf(attribuitions, "%s\tmov [ebx], al\n", attribuitions);
+					sprintf(attribuitions, "%s\tadd ebx, 1\n", attribuitions);
 				}
-				sprintf(attribuitions, "%s\tmov al, 24h\n", attribuitions);
-				sprintf(attribuitions, "%s\tmov DS:[bx], al\n", attribuitions);
+				sprintf(attribuitions, "%s\tmov al, 0\n", attribuitions);
+				sprintf(attribuitions, "%s\tmov [ebx], al\n", attribuitions);
 			} else if (type == INT) {
 				sprintf(attribuitions, "%s\tmov ax, %s%d\n\tmov [tmp+%u], ax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->address);
 			} else if (type == BYTE) {
@@ -214,14 +214,14 @@ void declaration(unsigned int* address)
 				}
 
 				if (type == STR) {
-					sprintf(attribuitions, "%s\tmov bx, %u\n", attribuitions, entry->address);
+					sprintf(attribuitions, "%s\tmov ebx, %s\n", attribuitions, entry->lexem);
 					for (int i = 1; i < strlen(reg.lexem)-1; i++) {
 						sprintf(attribuitions, "%s\tmov al, %u\n", attribuitions, reg.lexem[i]);
-						sprintf(attribuitions, "%s\tmov DS:[bx], al\n", attribuitions);
-						sprintf(attribuitions, "%s\tadd bx, 1\n", attribuitions);
+						sprintf(attribuitions, "%s\tmov [ebx], al\n", attribuitions);
+						sprintf(attribuitions, "%s\tadd ebx, 1\n", attribuitions);
 					}
-					sprintf(attribuitions, "%s\tmov al, 24h\n", attribuitions);
-					sprintf(attribuitions, "%s\tmov DS:[bx], al\n", attribuitions);
+					sprintf(attribuitions, "%s\tmov al, 0\n", attribuitions);
+					sprintf(attribuitions, "%s\tmov [ebx], al\n", attribuitions);
 				} else if (type == INT) {
 					sprintf(attribuitions, "%s\tmov ax, %s%d\n\tmov [tmp+%u], ax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->address);
 				} else if (type == BYTE) {

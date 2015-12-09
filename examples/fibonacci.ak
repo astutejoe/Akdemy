@@ -1,5 +1,5 @@
-final y = "Gabriel";
+string y = "Gabriel";
 
 begin
-	write y;
+	writeln y;
 end
