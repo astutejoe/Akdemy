@@ -17,9 +17,11 @@ run:
 	ld out.o -o out
 
 clean:
+	touch out	
 	touch x.o
 	touch $(EXEC)
 	touch x.exe
+	rm out
 	rm *.o
 	rm $(EXEC)
 	rm *.exe
