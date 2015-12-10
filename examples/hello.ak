@@ -1,5 +1,5 @@
-string y = "Deborah bunitinha";
+int x = -1000000;
 
 begin
-	writeln y;
+	writeln x;
 end

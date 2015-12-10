@@ -122,7 +122,7 @@ void declaration(unsigned int* address)
 			}
 
 			if (signal == PLUS || signal == MINUS) {
-				if (reg.type != BYTE && reg.token != INT) {
+				if (reg.type != BYTE && reg.type != INT) {
 					printf("%lu:tipos incompatíveis.\n", line);
 					exit(INCOMPATIBLETYPES);
 				}
@@ -147,7 +147,7 @@ void declaration(unsigned int* address)
 				sprintf(attribuitions, "%s\tmov al, 0\n", attribuitions);
 				sprintf(attribuitions, "%s\tmov [ebx], al\n", attribuitions);
 			} else if (type == INT) {
-				sprintf(attribuitions, "%s\tmov ax, %s%d\n\tmov [temporaries+%u], ax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->address);
+				sprintf(attribuitions, "%s\tmov eax, %s%d\n\tmov [%s], eax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->lexem);
 			} else if (type == BYTE) {
 				sprintf(attribuitions, "%s\tmov al, %d\n\tmov [temporaries+%u], al\n", attribuitions, atoi(reg.lexem), entry->address);
 			} else if (type == BOOL) {
@@ -591,43 +591,46 @@ void command()
 			char* positive = newLabel();
 			char* digits = newLabel();
 			char* printing = newLabel();
-			fprintf(output, "\tmov di, %u\n", temporariesString);
-			fprintf(output, "\tmov al, [temporaries+%u]\n", address);
+			fprintf(output, "\tmov edi, temporaries+%u\n", temporariesString);
+			fprintf(output, "\tmov eax, 0\n");
 
 			if (type == INT)
-				fprintf(output, "\tmov ah, [temporaries+%u]\n", address+1);
+				fprintf(output, "\tmov eax, [temporaries+%u]\n", address);
 			else
-				fprintf(output, "\tmov ah, 0\n");
+				fprintf(output, "\tmov al, [temporaries+%u]\n", address);
 
 			fprintf(output, "\tmov cx, 0\n");
-			fprintf(output, "\tcmp ax, 0\n");
+			fprintf(output, "\tmov esi, 0\n");
+			fprintf(output, "\tcmp eax, 0\n");
 			fprintf(output, "\tjge %s\n", positive);
-			fprintf(output, "\tmov bl, 2Dh\n");
-			fprintf(output, "\tmov DS:[di], bl\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tneg ax\n");
+			fprintf(output, "\tmov dl, 0x2D\n");
+			fprintf(output, "\tmov [edi], dl\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tneg eax\n");
+			fprintf(output, "\tadd esi, 1\n");
 			fprintf(output, "%s:\n", positive);
-			fprintf(output, "\tmov bx, 10\n");
+			fprintf(output, "\tmov ebx, 10\n");
 			fprintf(output, "%s:\n", digits);
 			fprintf(output, "\tadd cx, 1\n");
+			fprintf(output, "\tadd esi, 1\n");
 			fprintf(output, "\tmov dx, 0\n");
-			fprintf(output, "\tidiv bx\n");
+			fprintf(output, "\tidiv ebx\n");
 			fprintf(output, "\tpush dx\n");
-			fprintf(output, "\tcmp ax, 0\n");
+			fprintf(output, "\tcmp eax, 0\n");
 			fprintf(output, "\tjne %s\n", digits);
 			fprintf(output, "%s:\n", printing);
 			fprintf(output, "\tpop dx\n");
-			fprintf(output, "\tadd dx, 30h\n");
-			fprintf(output, "\tmov DS:[di], dl\n");
-			fprintf(output, "\tadd di, 1\n");
+			fprintf(output, "\tadd dx, 48\n");
+			fprintf(output, "\tmov [edi], dl\n");
+			fprintf(output, "\tadd edi, 1\n");
 			fprintf(output, "\tadd cx, -1\n");
 			fprintf(output,	"\tcmp cx, 0\n");
 			fprintf(output, "\tjne %s\n", printing);
-			fprintf(output, "\tmov dl, 24h\n");
-			fprintf(output, "\tmov DS:[di], dl\n");
-			fprintf(output, "\tmov dx, %u\n", temporariesString);
-			fprintf(output, "\tmov ah, 09h\n");
-			fprintf(output, "\tint 21h\n");
+			fprintf(output, "\tmov eax, 4\n");
+			fprintf(output, "\tmov ebx, 1\n");
+			fprintf(output, "\tmov ecx, temporaries+%u\n", temporariesString);
+			fprintf(output, "\tmov edx, esi\n");
+			fprintf(output, "\tint 0x80\n");
 		} else {
 			char* true = newLabel();
 			char* print = newLabel();
@@ -704,43 +707,46 @@ void command()
 				char* positive = newLabel();
 				char* digits = newLabel();
 				char* printing = newLabel();
-				fprintf(output, "\tmov di, %u\n", temporariesString);
-				fprintf(output, "\tmov al, [temporaries+%u]\n", address);
+				fprintf(output, "\tmov edi, temporaries+%u\n", temporariesString);
+				fprintf(output, "\tmov eax, 0\n");
 
 				if (type == INT)
-					fprintf(output, "\tmov ah, [temporaries+%u]\n", address+1);
+					fprintf(output, "\tmov eax, [temporaries+%u]\n", address);
 				else
-					fprintf(output, "\tmov ah, 0\n");
+					fprintf(output, "\tmov al, [temporaries+%u]\n", address);
 
 				fprintf(output, "\tmov cx, 0\n");
-				fprintf(output, "\tcmp ax, 0\n");
+				fprintf(output, "\tmov esi, 0\n");
+				fprintf(output, "\tcmp eax, 0\n");
 				fprintf(output, "\tjge %s\n", positive);
-				fprintf(output, "\tmov bl, 2Dh\n");
-				fprintf(output, "\tmov DS:[di], bl\n");
-				fprintf(output, "\tadd di, 1\n");
-				fprintf(output, "\tneg ax\n");
+				fprintf(output, "\tmov dl, 0x2D\n");
+				fprintf(output, "\tmov [edi], dl\n");
+				fprintf(output, "\tadd edi, 1\n");
+				fprintf(output, "\tneg eax\n");
+				fprintf(output, "\tadd esi, 1\n");
 				fprintf(output, "%s:\n", positive);
-				fprintf(output, "\tmov bx, 10\n");
+				fprintf(output, "\tmov ebx, 10\n");
 				fprintf(output, "%s:\n", digits);
 				fprintf(output, "\tadd cx, 1\n");
+				fprintf(output, "\tadd esi, 1\n");
 				fprintf(output, "\tmov dx, 0\n");
-				fprintf(output, "\tidiv bx\n");
+				fprintf(output, "\tidiv ebx\n");
 				fprintf(output, "\tpush dx\n");
-				fprintf(output, "\tcmp ax, 0\n");
+				fprintf(output, "\tcmp eax, 0\n");
 				fprintf(output, "\tjne %s\n", digits);
 				fprintf(output, "%s:\n", printing);
 				fprintf(output, "\tpop dx\n");
-				fprintf(output, "\tadd dx, 30h\n");
-				fprintf(output, "\tmov DS:[di], dl\n");
-				fprintf(output, "\tadd di, 1\n");
+				fprintf(output, "\tadd dx, 48\n");
+				fprintf(output, "\tmov [edi], dl\n");
+				fprintf(output, "\tadd edi, 1\n");
 				fprintf(output, "\tadd cx, -1\n");
 				fprintf(output,	"\tcmp cx, 0\n");
 				fprintf(output, "\tjne %s\n", printing);
-				fprintf(output, "\tmov dl, 24h\n");
-				fprintf(output, "\tmov DS:[di], dl\n");
-				fprintf(output, "\tmov dx, %u\n", temporariesString);
-				fprintf(output, "\tmov ah, 09h\n");
-				fprintf(output, "\tint 21h\n");
+				fprintf(output, "\tmov eax, 4\n");
+				fprintf(output, "\tmov ebx, 1\n");
+				fprintf(output, "\tmov ecx, temporaries+%u\n", temporariesString);
+				fprintf(output, "\tmov edx, esi\n");
+				fprintf(output, "\tint 0x80\n");
 			} else {
 				char* true = newLabel();
 				char* print = newLabel();
@@ -828,43 +834,46 @@ void command()
 			char* positive = newLabel();
 			char* digits = newLabel();
 			char* printing = newLabel();
-			fprintf(output, "\tmov di, %u\n", temporariesString);
-			fprintf(output, "\tmov al, [temporaries+%u]\n", address);
+			fprintf(output, "\tmov edi, temporaries+%u\n", temporariesString);
+			fprintf(output, "\tmov eax, 0\n");
 
 			if (type == INT)
-				fprintf(output, "\tmov ah, [temporaries+%u]\n", address+1);
+				fprintf(output, "\tmov eax, [temporaries+%u]\n", address);
 			else
-				fprintf(output, "\tmov ah, 0\n");
+				fprintf(output, "\tmov al, [temporaries+%u]\n", address);
 
 			fprintf(output, "\tmov cx, 0\n");
-			fprintf(output, "\tcmp ax, 0\n");
+			fprintf(output, "\tmov esi, 0\n");
+			fprintf(output, "\tcmp eax, 0\n");
 			fprintf(output, "\tjge %s\n", positive);
-			fprintf(output, "\tmov bl, 2Dh\n");
-			fprintf(output, "\tmov DS:[di], bl\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tneg ax\n");
+			fprintf(output, "\tmov dl, 0x2D\n");
+			fprintf(output, "\tmov [edi], dl\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tneg eax\n");
+			fprintf(output, "\tadd esi, 1\n");
 			fprintf(output, "%s:\n", positive);
-			fprintf(output, "\tmov bx, 10\n");
+			fprintf(output, "\tmov ebx, 10\n");
 			fprintf(output, "%s:\n", digits);
 			fprintf(output, "\tadd cx, 1\n");
+			fprintf(output, "\tadd esi, 1\n");
 			fprintf(output, "\tmov dx, 0\n");
-			fprintf(output, "\tidiv bx\n");
+			fprintf(output, "\tidiv ebx\n");
 			fprintf(output, "\tpush dx\n");
-			fprintf(output, "\tcmp ax, 0\n");
+			fprintf(output, "\tcmp eax, 0\n");
 			fprintf(output, "\tjne %s\n", digits);
 			fprintf(output, "%s:\n", printing);
 			fprintf(output, "\tpop dx\n");
-			fprintf(output, "\tadd dx, 30h\n");
-			fprintf(output, "\tmov DS:[di], dl\n");
-			fprintf(output, "\tadd di, 1\n");
+			fprintf(output, "\tadd dx, 48\n");
+			fprintf(output, "\tmov [edi], dl\n");
+			fprintf(output, "\tadd edi, 1\n");
 			fprintf(output, "\tadd cx, -1\n");
 			fprintf(output,	"\tcmp cx, 0\n");
 			fprintf(output, "\tjne %s\n", printing);
-			fprintf(output, "\tmov dl, 24h\n");
-			fprintf(output, "\tmov DS:[di], dl\n");
-			fprintf(output, "\tmov dx, %u\n", temporariesString);
-			fprintf(output, "\tmov ah, 09h\n");
-			fprintf(output, "\tint 21h\n");
+			fprintf(output, "\tmov eax, 4\n");
+			fprintf(output, "\tmov ebx, 1\n");
+			fprintf(output, "\tmov ecx, temporaries+%u\n", temporariesString);
+			fprintf(output, "\tmov edx, esi\n");
+			fprintf(output, "\tint 0x80\n");
 		} else {
 			char* true = newLabel();
 			char* print = newLabel();
@@ -941,43 +950,46 @@ void command()
 				char* positive = newLabel();
 				char* digits = newLabel();
 				char* printing = newLabel();
-				fprintf(output, "\tmov di, %u\n", temporariesString);
-				fprintf(output, "\tmov al, [temporaries+%u]\n", address);
+				fprintf(output, "\tmov edi, temporaries+%u\n", temporariesString);
+				fprintf(output, "\tmov eax, 0\n");
 
 				if (type == INT)
-					fprintf(output, "\tmov ah, [temporaries+%u]\n", address+1);
+					fprintf(output, "\tmov eax, [temporaries+%u]\n", address);
 				else
-					fprintf(output, "\tmov ah, 0\n");
+					fprintf(output, "\tmov al, [temporaries+%u]\n", address);
 
 				fprintf(output, "\tmov cx, 0\n");
-				fprintf(output, "\tcmp ax, 0\n");
+				fprintf(output, "\tmov esi, 0\n");
+				fprintf(output, "\tcmp eax, 0\n");
 				fprintf(output, "\tjge %s\n", positive);
-				fprintf(output, "\tmov bl, 2Dh\n");
-				fprintf(output, "\tmov DS:[di], bl\n");
-				fprintf(output, "\tadd di, 1\n");
-				fprintf(output, "\tneg ax\n");
+				fprintf(output, "\tmov dl, 0x2D\n");
+				fprintf(output, "\tmov [edi], dl\n");
+				fprintf(output, "\tadd edi, 1\n");
+				fprintf(output, "\tneg eax\n");
+				fprintf(output, "\tadd esi, 1\n");
 				fprintf(output, "%s:\n", positive);
-				fprintf(output, "\tmov bx, 10\n");
+				fprintf(output, "\tmov ebx, 10\n");
 				fprintf(output, "%s:\n", digits);
 				fprintf(output, "\tadd cx, 1\n");
+				fprintf(output, "\tadd esi, 1\n");
 				fprintf(output, "\tmov dx, 0\n");
-				fprintf(output, "\tidiv bx\n");
+				fprintf(output, "\tidiv ebx\n");
 				fprintf(output, "\tpush dx\n");
-				fprintf(output, "\tcmp ax, 0\n");
+				fprintf(output, "\tcmp eax, 0\n");
 				fprintf(output, "\tjne %s\n", digits);
 				fprintf(output, "%s:\n", printing);
 				fprintf(output, "\tpop dx\n");
-				fprintf(output, "\tadd dx, 30h\n");
-				fprintf(output, "\tmov DS:[di], dl\n");
-				fprintf(output, "\tadd di, 1\n");
+				fprintf(output, "\tadd dx, 48\n");
+				fprintf(output, "\tmov [edi], dl\n");
+				fprintf(output, "\tadd edi, 1\n");
 				fprintf(output, "\tadd cx, -1\n");
 				fprintf(output,	"\tcmp cx, 0\n");
 				fprintf(output, "\tjne %s\n", printing);
-				fprintf(output, "\tmov dl, 24h\n");
-				fprintf(output, "\tmov DS:[di], dl\n");
-				fprintf(output, "\tmov dx, %u\n", temporariesString);
-				fprintf(output, "\tmov ah, 09h\n");
-				fprintf(output, "\tint 21h\n");
+				fprintf(output, "\tmov eax, 4\n");
+				fprintf(output, "\tmov ebx, 1\n");
+				fprintf(output, "\tmov ecx, temporaries+%u\n", temporariesString);
+				fprintf(output, "\tmov edx, esi\n");
+				fprintf(output, "\tint 0x80\n");
 			} else {
 				char* true = newLabel();
 				char* print = newLabel();
@@ -1104,7 +1116,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (*type == INT || *type == BYTE)
 					{
@@ -1119,22 +1131,20 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov %s, al\n", label);
+							fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						}
 						else if (firstExprType == INT && *type == BYTE)
 						{
-							fprintf(output, "\tmov al, [temporaries+%u]\n", firstExprAdd);
-							fprintf(output, "\tmov ah, [temporaries+%u]\n", firstExprAdd+1);
+							fprintf(output, "\tmov eax, [temporaries+%u]\n", firstExprAdd);
 							fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
-							fprintf(output, "\tmov bh, 0\n");
-							fprintf(output, "\tcmp ax, bx\n");
+							fprintf(output, "\tcmp eax, bl\n");
 							fprintf(output, "\tje %s\n", true);
 							fprintf(output, "\tmov al, 0\n");
 							fprintf(output, "\tjmp %s\n", end);
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov %s, al\n", label);
+							fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						}
 						else if (firstExprType == BYTE && *type == INT)
 						{
@@ -1149,7 +1159,7 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov [temporaries+%u], al\n", label);
+							fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						}
 						else
 						{
@@ -1164,7 +1174,7 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov %s, al\n", label);
+							fprintf(output, "\tmov %s, al\n", *address);
 						}
 					}
 					else
@@ -1192,11 +1202,11 @@ void expr(int* type, int* address)
 						fprintf(output, "\tjmp %s\n", iterate);
 						fprintf(output, "%s:\n", equal);
 						fprintf(output, "\tmov al, 255\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						fprintf(output, "\tjmp %s\n", end);
 						fprintf(output, "%s:\n", notequal);
 						fprintf(output, "\tmov al, 0\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						fprintf(output, "\tjmp %s\n", end);
 						fprintf(output, "%s:\n", firstended);
 						fprintf(output, "\tmov al, DS:[bx]\n");
@@ -1217,7 +1227,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (*type == INT || *type == BYTE)
 					{
@@ -1232,7 +1242,7 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov %s, al\n", label);
+							fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						}
 						else if (firstExprType == INT && *type == BYTE)
 						{
@@ -1247,7 +1257,7 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov %s, al\n", label);
+							fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						}
 						else if (firstExprType == BYTE && *type == INT)
 						{
@@ -1262,7 +1272,7 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov %s, al\n", label);
+							fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						}
 						else
 						{
@@ -1277,7 +1287,7 @@ void expr(int* type, int* address)
 							fprintf(output, "%s:\n", true);
 							fprintf(output, "\tmov al, 255\n");
 							fprintf(output, "%s:\n", end);
-							fprintf(output, "\tmov %s, al\n", label);
+							fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						}
 					}
 					break;
@@ -1293,7 +1303,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
@@ -1308,7 +1318,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == BYTE && *type == INT)
 					{
@@ -1323,7 +1333,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else
 					{
@@ -1338,7 +1348,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					break;
 				case GREATER:
@@ -1353,7 +1363,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
@@ -1368,7 +1378,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == BYTE && *type == INT)
 					{
@@ -1383,7 +1393,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else
 					{
@@ -1398,7 +1408,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					break;
 				case MINEQ:
@@ -1413,7 +1423,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
@@ -1428,7 +1438,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == BYTE && *type == INT)
 					{
@@ -1443,7 +1453,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else
 					{
@@ -1458,7 +1468,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					break;
 				case GREATEQ:
@@ -1473,7 +1483,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == INT && *type == BYTE)
 					{
@@ -1488,7 +1498,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == BYTE && *type == INT)
 					{
@@ -1503,7 +1513,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else
 					{
@@ -1518,7 +1528,7 @@ void expr(int* type, int* address)
 						fprintf(output, "%s:\n", true);
 						fprintf(output, "\tmov al, 255\n");
 						fprintf(output, "%s:\n", end);
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					break;
 			}
@@ -1627,7 +1637,7 @@ void A(int* type, int* address)
 					fprintf(output, "\tmov al, [temporaries+%u]\n", firstExprAdd);
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tadd al, bl\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 				}
 				else if (firstExprType == INT && *type == BYTE)
 				{
@@ -1636,7 +1646,7 @@ void A(int* type, int* address)
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tmov bh, 0\n");
 					fprintf(output, "\tadd ax, bx\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 					*type = INT;
 				}
@@ -1647,7 +1657,7 @@ void A(int* type, int* address)
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tmov bh, [temporaries+%u]\n", *address+1);
 					fprintf(output, "\tadd ax, bx\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 				}
 				else if (firstExprType == INT && *type == INT)
@@ -1657,7 +1667,7 @@ void A(int* type, int* address)
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tmov bh, [temporaries+%u]\n", *address+1);
 					fprintf(output, "\tadd ax, bx\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 				}
 				else
@@ -1689,7 +1699,7 @@ void A(int* type, int* address)
 					fprintf(output, "\tmov al, [temporaries+%u]\n", firstExprAdd);
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tsub al, bl\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 				}
 				else if (firstExprType == INT && *type == BYTE)
 				{
@@ -1698,7 +1708,7 @@ void A(int* type, int* address)
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tmov bh, 0\n");
 					fprintf(output, "\tsub ax, bx\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 					*type = INT;
 				}
@@ -1709,7 +1719,7 @@ void A(int* type, int* address)
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tmov bh, [temporaries+%u]\n", *address+1);
 					fprintf(output, "\tsub ax, bx\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 				}
 				else
@@ -1719,7 +1729,7 @@ void A(int* type, int* address)
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tmov bh, [temporaries+%u]\n", *address+1);
 					fprintf(output, "\tsub ax, bx\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 				}
 				break;
@@ -1727,7 +1737,7 @@ void A(int* type, int* address)
 				fprintf(output, "\tmov al, [temporaries+%u]\n", firstExprAdd);
 				fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 				fprintf(output, "\tor al, bl\n");
-				fprintf(output, "\tmov %s, al\n", label);
+				fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 				break;
 		}
 	}
@@ -1772,7 +1782,7 @@ void B(int* type, int* address)
 						fprintf(output, "\tmov al, [temporaries+%u]\n", firstExprAdd);
 						fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 						fprintf(output, "\tmul bl\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == INT && *type == INT)
 					{
@@ -1781,7 +1791,7 @@ void B(int* type, int* address)
 						fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 						fprintf(output, "\tmov bh, [temporaries+%u]\n", *address+1);
 						fprintf(output, "\timul bx\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 					}
 					else if (firstExprType == INT && *type == BYTE)
@@ -1791,7 +1801,7 @@ void B(int* type, int* address)
 						fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\timul bx\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 						*type = INT;
 					}
@@ -1802,7 +1812,7 @@ void B(int* type, int* address)
 						fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 						fprintf(output, "\tmov bh, [temporaries+%u]\n", *address+1);
 						fprintf(output, "\timul bx\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 					}
 					break;
@@ -1815,7 +1825,7 @@ void B(int* type, int* address)
 						fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\tidiv bx\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					}
 					else if (firstExprType == INT && *type == INT)
 					{
@@ -1825,7 +1835,7 @@ void B(int* type, int* address)
 						fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 						fprintf(output, "\tmov bh, [temporaries+%u]\n", *address+1);
 						fprintf(output, "\tidiv bx\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 					}
 					else if (firstExprType == INT && *type == BYTE)
@@ -1836,7 +1846,7 @@ void B(int* type, int* address)
 						fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 						fprintf(output, "\tmov bh, 0\n");
 						fprintf(output, "\tidiv bx\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 						*type = INT;
 					}
@@ -1848,7 +1858,7 @@ void B(int* type, int* address)
 						fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 						fprintf(output, "\tmov bh, [temporaries+%u]\n", *address+1);
 						fprintf(output, "\tidiv bx\n");
-						fprintf(output, "\tmov %s, al\n", label);
+						fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 						fprintf(output, "\tmov [temporaries+%u], ah\n", *address+1);
 					}
 					break;
@@ -1856,7 +1866,7 @@ void B(int* type, int* address)
 					fprintf(output, "\tmov al, [temporaries+%u]\n", firstExprAdd);
 					fprintf(output, "\tmov bl, [temporaries+%u]\n", *address);
 					fprintf(output, "\tand al, bl\n");
-					fprintf(output, "\tmov %s, al\n", label);
+					fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 					break;
 			}
 		}
@@ -1885,7 +1895,7 @@ void C(int* type, int* address)
 	{
 		fprintf(output, "\tmov al, [temporaries+%u]\n", *address);
 		fprintf(output, "\nnot al\n");
-		fprintf(output, "\tmov %s, al\n", label);
+		fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 	}
 }
 
@@ -1906,25 +1916,23 @@ void D(int* type, int* address)
 		*address = newTemporary(*type);
 
 		if (*type == INT) {
-			fprintf(output, "\tmov al, %u\n", atoi(reg.lexem) & 0x000000FF);
-			fprintf(output, "\tmov ah, %u\n", (atoi(reg.lexem) & 0x0000FF00) >> 8);
-			fprintf(output, "\tmov %s, al\n", label);
-			fprintf(output, "\tmov [temporaries+%u], ah\n", *address + 1);
+			fprintf(output, "\tmov eax, %u\n", atoi(reg.lexem));
+			fprintf(output, "\tmov [temporaries+%u], eax\n", *address);
 		} else if (*type == STR) {
-			fprintf(output, "\tmov bx, %u\n", *address);
+			fprintf(output, "\tmov ebx, %u\n", *address);
 			for (int i = 1; i < strlen(reg.lexem)-1; i++) {
 				fprintf(output, "\tmov al, %u\n", reg.lexem[i]);
-				fprintf(output, "\tmov DS:[bx], al\n");
-				fprintf(output, "\tadd bx, 1\n");
+				fprintf(output, "\tmov [ebx], al\n");
+				fprintf(output, "\tadd ebx, 1\n");
 			}
-			fprintf(output, "\tmov al, 24h\n");
-			fprintf(output, "\tmov DS:[bx], al\n");
+			fprintf(output, "\tmov al, 0x00\n");
+			fprintf(output, "\tmov [ebx], al\n");
 		} else if (*type == BYTE) {
-			fprintf(output, "\tmov al, %u\n", atoi(reg.lexem) & 0x000000FF);
-			fprintf(output, "\tmov %s, al\n", label);
+			fprintf(output, "\tmov al, %u\n", atoi(reg.lexem));
+			fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 		} else {
 			fprintf(output, "\tmov al, %u\n", (strncmp(reg.lexem, "TRUE", 4) == 0 ? 0xFF : 0x00));
-			fprintf(output, "\tmov %s, al\n", label);
+			fprintf(output, "\tmov [temporaries+%u], al\n", *address);
 		}
 
 		matchToken(LITERAL);
@@ -1948,10 +1956,8 @@ void D(int* type, int* address)
 		}
 		else if (*type == INT)
 		{
-			fprintf(output, "\tmov al, [temporaries+%u]\n", *address);
-			fprintf(output, "\tmov ah, [temporaries+%u]\n", *address+1);
-			fprintf(output, "\tmov [temporaries+%u], al\n", temporary);
-			fprintf(output, "\tmov [temporaries+%u], ah\n", temporary+1);
+			fprintf(output, "\tmov eax, [%s]\n", varLabel);
+			fprintf(output, "\tmov [temporaries+%u], eax\n", temporary);
 		}
 		else if (*type == STR)
 		{
@@ -2005,9 +2011,9 @@ int newTemporary(int type)
 	if (type == BOOL || type == BYTE)
 		stack++;
 	else if (type == INT)
-		stack += 2;
+		stack += 4;
 	else if (type == STR)
-		stack += 0x100;
+		stack += 65536;
 	else if (type == BUFFER)
 		stack += 0x103;
 

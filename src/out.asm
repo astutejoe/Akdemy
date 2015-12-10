@@ -2,89 +2,48 @@ section	.data
 	endl:	 db 0x0A
 section	.bss
 	temporaries:	resb 8388608
-	y:	resb 65536
+	x:	resw 1
 section	.text
 global	_start
 _start:
-	mov ebx, y
-	mov al, 68
-	mov [ebx], al
-	add ebx, 1
-	mov al, 101
-	mov [ebx], al
-	add ebx, 1
-	mov al, 98
-	mov [ebx], al
-	add ebx, 1
-	mov al, 111
-	mov [ebx], al
-	add ebx, 1
-	mov al, 114
-	mov [ebx], al
-	add ebx, 1
-	mov al, 97
-	mov [ebx], al
-	add ebx, 1
-	mov al, 104
-	mov [ebx], al
-	add ebx, 1
-	mov al, 32
-	mov [ebx], al
-	add ebx, 1
-	mov al, 98
-	mov [ebx], al
-	add ebx, 1
-	mov al, 117
-	mov [ebx], al
-	add ebx, 1
-	mov al, 110
-	mov [ebx], al
-	add ebx, 1
-	mov al, 105
-	mov [ebx], al
-	add ebx, 1
-	mov al, 116
-	mov [ebx], al
-	add ebx, 1
-	mov al, 105
-	mov [ebx], al
-	add ebx, 1
-	mov al, 110
-	mov [ebx], al
-	add ebx, 1
-	mov al, 104
-	mov [ebx], al
-	add ebx, 1
-	mov al, 97
-	mov [ebx], al
-	add ebx, 1
-	mov al, 0
-	mov [ebx], al
+	mov eax, -1000000
+	mov [x], eax
+	mov eax, [x]
+	mov [temporaries+0], eax
+	mov edi, temporaries+4
 	mov eax, 0
-	mov ebx, 0
-R2:
-	mov cl, [y+ebx]
-	cmp cl, 0x00
-	je R1
-	mov [temporaries+eax], cl
-	add eax, 1
-	add ebx, 1
-	jmp R2
+	mov eax, [temporaries+0]
+	mov cx, 0
+	mov esi, 0
+	cmp eax, 0
+	jge R1
+	mov dl, 0x2D
+	mov [edi], dl
+	add edi, 1
+	neg eax
+	add esi, 1
 R1:
-	mov [temporaries+eax], cl
-	mov edx, 0
-	mov ebx, temporaries+0
+	mov ebx, 10
+R2:
+	add cx, 1
+	add esi, 1
+	mov dx, 0
+	idiv ebx
+	push dx
+	cmp eax, 0
+	jne R2
 R3:
-	mov al, [ebx]
-	cmp al, 0x00
-	je R4
-	add ebx, 1
-	add edx, 1
-	jmp R3
-	R4:
+	pop dx
+	add dx, 48
+	mov [edi], dl
+	add edi, 1
+	add cx, -1
+	cmp cx, 0
+	jne R3
 	mov eax, 4
 	mov ebx, 1
-	mov ecx, temporaries+0
+	mov ecx, temporaries+4
+	mov edx, esi
 	int 0x80
 	mov eax, 4
 	mov ebx, 1
