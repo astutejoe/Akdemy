@@ -569,10 +569,22 @@ void command()
 		expr(&type, &address);
 
 		if (type == STR) {
+			char* loop = newLabel();
+			char* end = newLabel();
+
+			fprintf(output, "\tmov edx, 0\n");
+			fprintf(output, "\tmov ebx, temporaries+%u\n", address);
+			fprintf(output, "%s\n", loop);
+			fprintf(output, "\tmov al, [ebx]\n");
+			fprintf(output, "\tcmp al, 0x00\n");
+			fprintf(output, "\tje end\n");
+			fprintf(output, "\tadd ebx, 1\n");
+			fprintf(output, "\tadd edx, 1\n");
+			fprintf(output, "\tjmp loop\n");
+			fprintf(output, "\t%s:\n", end);
 			fprintf(output, "\tmov eax, 4\n");
 			fprintf(output, "\tmov ebx, 1\n");
 			fprintf(output, "\tmov ecx, temporaries+%u\n", address);
-			fprintf(output, "\tmov edx, 7\n");
 			fprintf(output, "\tint 0x80\n");
 		} else if (type == INT || type == BYTE) {
 			int temporariesString = newTemporary(STR);
@@ -670,10 +682,22 @@ void command()
 			expr(&type, &address);
 
 			if (type == STR) {
+				char* loop = newLabel();
+				char* end = newLabel();
+
+				fprintf(output, "\tmov edx, 0\n");
+				fprintf(output, "\tmov ebx, temporaries+%u\n", address);
+				fprintf(output, "%s:\n", loop);
+				fprintf(output, "\tmov al, [ebx]\n");
+				fprintf(output, "\tcmp al, 0x00\n");
+				fprintf(output, "\tje %s\n", end);
+				fprintf(output, "\tadd ebx, 1\n");
+				fprintf(output, "\tadd edx, 1\n");
+				fprintf(output, "\tjmp %s\n", loop);
+				fprintf(output, "%s:\n", end);
 				fprintf(output, "\tmov eax, 4\n");
 				fprintf(output, "\tmov ebx, 1\n");
 				fprintf(output, "\tmov ecx, temporaries+%u\n", address);
-				fprintf(output, "\tmov edx, 7\n");
 				fprintf(output, "\tint 0x80\n");
 			} else if (type == INT || type == BYTE) {
 				int temporariesString = newTemporary(STR);
@@ -782,10 +806,22 @@ void command()
 		expr(&type, &address);
 
 		if (type == STR) {
+			char* loop = newLabel();
+			char* end = newLabel();
+
+			fprintf(output, "\tmov edx, 0\n");
+			fprintf(output, "\tmov ebx, temporaries+%u\n", address);
+			fprintf(output, "%s:\n", loop);
+			fprintf(output, "\tmov al, [ebx]\n");
+			fprintf(output, "\tcmp al, 0x00\n");
+			fprintf(output, "\tje %s\n", end);
+			fprintf(output, "\tadd ebx, 1\n");
+			fprintf(output, "\tadd edx, 1\n");
+			fprintf(output, "\tjmp %s\n", loop);
+			fprintf(output, "\t%s:\n", end);
 			fprintf(output, "\tmov eax, 4\n");
 			fprintf(output, "\tmov ebx, 1\n");
 			fprintf(output, "\tmov ecx, temporaries+%u\n", address);
-			fprintf(output, "\tmov edx, 7\n");
 			fprintf(output, "\tint 0x80\n");
 		} else if (type == INT || type == BYTE) {
 			int temporariesString = newTemporary(STR);
@@ -883,10 +919,22 @@ void command()
 			expr(&type, &address);
 
 			if (type == STR) {
+				char* loop = newLabel();
+				char* end = newLabel();
+
+				fprintf(output, "\tmov edx, 0\n");
+				fprintf(output, "\tmov ebx, temporaries+%u\n", address);
+				fprintf(output, "%s:\n", loop);
+				fprintf(output, "\tmov al, [ebx]\n");
+				fprintf(output, "\tcmp al, 0x00\n");
+				fprintf(output, "\tje %s\n", end);
+				fprintf(output, "\tadd ebx, 1\n");
+				fprintf(output, "\tadd edx, 1\n");
+				fprintf(output, "\tjmp %s\n", loop);
+				fprintf(output, "\t%s:\n", end);
 				fprintf(output, "\tmov eax, 4\n");
 				fprintf(output, "\tmov ebx, 1\n");
 				fprintf(output, "\tmov ecx, temporaries+%u\n", address);
-				fprintf(output, "\tmov edx, 7\n");
 				fprintf(output, "\tint 0x80\n");
 			} else if (type == INT || type == BYTE) {
 				int temporariesString = newTemporary(STR);
@@ -1912,15 +1960,15 @@ void D(int* type, int* address)
 			fprintf(output, "\tmov eax, %u\n", temporary);
 			fprintf(output, "\tmov ebx, 0\n");
 			fprintf(output, "%s:\n", loop);
-			fprintf(output, "\tmov ecx, [%s+ebx]\n", varLabel);
-			fprintf(output, "\tcmp ecx, 0x00\n");
+			fprintf(output, "\tmov cl, [%s+ebx]\n", varLabel);
+			fprintf(output, "\tcmp cl, 0x00\n");
 			fprintf(output, "\tje %s\n", end);
-			fprintf(output, "\tmov [temporaries+eax], ecx\n");
+			fprintf(output, "\tmov [temporaries+eax], cl\n");
 			fprintf(output, "\tadd eax, 1\n");
 			fprintf(output, "\tadd ebx, 1\n");
 			fprintf(output, "\tjmp %s\n", loop);
 			fprintf(output, "%s:\n", end);
-			fprintf(output, "\tmov [temporaries+eax], ecx\n");
+			fprintf(output, "\tmov [temporaries+eax], cl\n");
 		}
 
 		*address = temporary;
