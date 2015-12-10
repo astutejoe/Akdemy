@@ -1,5 +1,5 @@
-int x = -1000000;
+string y = "Ola Mundo";
 
 begin
-	writeln x;
+	writeln y;
 end

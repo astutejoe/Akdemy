@@ -149,9 +149,9 @@ void declaration(unsigned int* address)
 			} else if (type == INT) {
 				sprintf(attribuitions, "%s\tmov eax, %s%d\n\tmov [%s], eax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->lexem);
 			} else if (type == BYTE) {
-				sprintf(attribuitions, "%s\tmov al, %d\n\tmov [temporaries+%u], al\n", attribuitions, atoi(reg.lexem), entry->address);
+				sprintf(attribuitions, "%s\tmov al, %d\n\tmov [%s], al\n", attribuitions, atoi(reg.lexem), entry->lexem);
 			} else if (type == BOOL) {
-				sprintf(attribuitions, "%s\tmov al, %d\n\tmov [temporaries+%u], al\n", attribuitions, strncmp(reg.lexem,"TRUE", 4) == 0 ? 0xFF : 0x00, entry->address);
+				sprintf(attribuitions, "%s\tmov al, %d\n\tmov [%s], al\n", attribuitions, strncmp(reg.lexem,"TRUE", 4) == 0 ? 0xFF : 0x00, entry->lexem);
 			}
 
 			matchToken(LITERAL);
@@ -881,45 +881,48 @@ void command()
 			fprintf(output, "\tmov al, [temporaries+%u]\n", address);
 			fprintf(output, "\tcmp al, 0\n");
 			fprintf(output, "\tjne %s\n", true);
-			fprintf(output, "\tmov di, %u\n", temporariesOut);
-			fprintf(output, "\tmov ax, 70\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 65\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 76\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 83\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 69\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 36\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
+			fprintf(output, "\tmov edi, temporaries+%u\n", temporariesOut);
+			fprintf(output, "\tmov al, 70\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 65\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 76\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 83\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 69\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 36\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tmov edx, 5\n");
 			fprintf(output, "\tjmp %s\n", print);
 			fprintf(output, "%s:\n", true);
-			fprintf(output, "\tmov di, %u\n", temporariesOut);
-			fprintf(output, "\tmov ax, 84\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 82\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 85\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 69\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
-			fprintf(output, "\tadd di, 1\n");
-			fprintf(output, "\tmov ax, 36\n");
-			fprintf(output, "\tmov DS:[di], ax\n");
+			fprintf(output, "\tmov edi, temporaries+%u\n", temporariesOut);
+			fprintf(output, "\tmov al, 84\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 82\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 85\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 69\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tadd edi, 1\n");
+			fprintf(output, "\tmov al, 36\n");
+			fprintf(output, "\tmov [edi], al\n");
+			fprintf(output, "\tmov edx, 4\n");
 			fprintf(output, "%s:\n", print);
-			fprintf(output, "\tmov dx, %u\n", temporariesOut);
-			fprintf(output, "\tmov ah, 09h\n");
-			fprintf(output, "\tint 21h\n");
+			fprintf(output, "\tmov eax, 4\n");
+			fprintf(output, "\tmov ebx, 1\n");
+			fprintf(output, "\tmov ecx, temporaries+%u\n", temporariesOut);
+			fprintf(output, "\tint 0x80\n");
 		}
 
 		while (reg.token == COMMA)
@@ -1951,7 +1954,7 @@ void D(int* type, int* address)
 
 		if (*type == BYTE || *type == BOOL)
 		{
-			fprintf(output, "\tmov al, [temporaries+%u]\n", *address);
+			fprintf(output, "\tmov al, [%s]\n", varLabel);
 			fprintf(output, "\tmov [temporaries+%u], al\n", temporary);
 		}
 		else if (*type == INT)
