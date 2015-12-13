@@ -79,7 +79,7 @@ void declaration(unsigned int* address)
 		if (reg.entry->class == NULL) {
 			reg.entry->class=VAR;
 		} else {
-			printf("%lu:identificador ja declarado %s.\n", line, reg.lexem);
+			printf("%lu:%s.\n", line, alreadyDeclared);
 			exit(ALREADYDECLARED);
 		}
 
@@ -123,7 +123,7 @@ void declaration(unsigned int* address)
 
 			if (signal == PLUS || signal == MINUS) {
 				if (reg.type != BYTE && reg.type != INT) {
-					printf("%lu:tipos incompatíveis.\n", line);
+					printf("%lu:%s.\n", line, incompatibleTypes);
 					exit(INCOMPATIBLETYPES);
 				}
 				if (reg.type == BYTE && signal == MINUS) {
@@ -133,7 +133,7 @@ void declaration(unsigned int* address)
 			}
 
 			if (!(entry->type == reg.type || (entry->type == INT && reg.type == BYTE))) {
-				printf("%lu:tipos incompatíveis.\n", line);
+				printf("%lu:%s.\n", line, incompatibleTypes);
 				exit(INCOMPATIBLETYPES);
 			}
 
@@ -164,7 +164,7 @@ void declaration(unsigned int* address)
 			if (reg.entry->class == NULL) {
 				reg.entry->class=VAR;
 			} else {
-				printf("%lu:identificador ja declarado %s.\n", line, reg.lexem);
+				printf("%lu:%s.\n", line, alreadyDeclared);
 				exit(ALREADYDECLARED);
 			}
 
@@ -199,7 +199,7 @@ void declaration(unsigned int* address)
 
 				if (signal == PLUS || signal == MINUS) {
 					if (reg.type != BYTE && reg.type != INT) {
-						printf("%lu:tipos incompatíveis.\n", line);
+						printf("%lu:%s.\n", line, incompatibleTypes);
 						exit(INCOMPATIBLETYPES);
 					}
 					if (reg.type == BYTE && signal == MINUS) {
@@ -209,7 +209,7 @@ void declaration(unsigned int* address)
 				}
 
 				if (!(entry->type == reg.type || (entry->type == INT && reg.type == BYTE))) {
-					printf("%lu:tipos incompatíveis.\n", line);
+					printf("%lu:%s.\n", line, incompatibleTypes);
 					exit(INCOMPATIBLETYPES);
 				}
 
@@ -243,7 +243,7 @@ void declaration(unsigned int* address)
 		if (reg.entry->class == NULL) {
 			reg.entry->class = CONST;
 		} else {
-			printf("%lu:identificador ja declarado %s.\n", line, reg.lexem);
+			printf("%lu:%s.\n", line, alreadyDeclared);
 			exit(ALREADYDECLARED);
 		}
 
@@ -261,7 +261,7 @@ void declaration(unsigned int* address)
 
 		if (signal == PLUS || signal == MINUS) {
 			if (reg.type != BYTE && reg.token != INT) {
-				printf("%lu:tipos incompatíveis.\n", line);
+				printf("%lu:%s.\n", line, incompatibleTypes);
 				exit(INCOMPATIBLETYPES);
 			}
 			if (reg.type == BYTE && signal == MINUS) {
@@ -324,11 +324,11 @@ void command()
 	if(reg.token == ID)
 	{
 		if (reg.entry->class == NULL) {
-			printf("%lu:identificador nao declarado %s.\n", line, reg.lexem);
+			printf("%lu:%s.\n", line, undeclaredIdentifier);
 			exit(UNDECLAREDIDENTIFIER);
 		} else if (reg.entry->class == CONST) {
-			printf("%lu:classe de identificador incompativel %s.\n", line, reg.lexem);
-			exit(UNDECLAREDIDENTIFIER);
+			printf("%lu:%s [%s].\n", line, incompatibleClass, reg.lexem);
+			exit(INCOMPATIBLECLASS);
 		}
 
 		Entry* entry = reg.entry;
@@ -339,7 +339,7 @@ void command()
 		expr(&type, &address);
 
 		if (!(entry->type == type || (entry->type == INT && type == BYTE))) {
-			printf("%lu:tipos incompatíveis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 
@@ -398,7 +398,7 @@ void command()
 		expr(&type, &address);
 		if (type != BOOL)
 		{
-			printf("%lu:tipos incompatíveis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 
@@ -429,7 +429,7 @@ void command()
 
 		if (type != BOOL)
 		{
-			printf("%lu:tipos incompatíveis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 
@@ -1074,32 +1074,32 @@ void expr(int* type, int* address)
 
 		if (firstExprType == STR && *type != STR)
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (firstExprType == BOOL && *type != BOOL)
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (firstExprType == BYTE && (*type != INT && *type != BYTE))
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (firstExprType == INT && (*type != INT && *type != BYTE))
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (firstExprType == STR && token != EQUAL)
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (firstExprType == BOOL && (token != EQUAL && token != DIFF))
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else
@@ -1556,7 +1556,7 @@ void A(int* type, int* address)
 
 	if ( (token == MINUS || token == PLUS) && (*type != INT && *type != BYTE) )
 	{
-		printf("%lu:tipos incompativeis.\n", line);
+		printf("%lu:%s.\n", line, incompatibleTypes);
 		exit(INCOMPATIBLETYPES);
 	}
 
@@ -1590,17 +1590,17 @@ void A(int* type, int* address)
 
 		if (token == MINUS && (*type != BYTE && *type != INT))
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (token == PLUS && *type == BOOL)
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (token == OR && *type != BOOL)
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 
@@ -1612,23 +1612,23 @@ void A(int* type, int* address)
 
 		if (token == MINUS && (*type != BYTE && *type != INT))
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (token == PLUS && *type == BOOL)
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else if (token == OR && *type != BOOL)
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 
 		if ((firstExprType == BYTE || firstExprType == INT) && (*type != BYTE && *type != INT))
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 
@@ -1761,7 +1761,7 @@ void B(int* type, int* address)
 		if ( ( (operation == MULT || operation == DIVIDE) && (*type == STR || *type == BOOL) )
 		    || (operation == AND && *type != BOOL) ) 
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 
@@ -1772,7 +1772,7 @@ void B(int* type, int* address)
 		if ( ( (operation == MULT || operation == DIVIDE) && (*type == STR || *type == BOOL) )
 		    || (operation == AND && *type != BOOL) ) 
 		{
-			printf("%lu:tipos incompativeis.\n", line);
+			printf("%lu:%s.\n", line, incompatibleTypes);
 			exit(INCOMPATIBLETYPES);
 		}
 		else
@@ -1891,7 +1891,7 @@ void C(int* type, int* address)
 
 	if (not && *type != BOOL)
 	{
-		printf("%lu:tipos incompativeis.\n", line);
+		printf("%lu:%s.\n", line, incompatibleTypes);
 		exit(INCOMPATIBLETYPES);
 	}
 	else if (not)
@@ -1943,7 +1943,7 @@ void D(int* type, int* address)
 	else
 	{
 		if (reg.entry->class == NULL) {
-			printf("%lu:identificador nao declarado %s.\n", line, reg.lexem);
+			printf("%lu:%s.\n", line, undeclaredIdentifier);
 			exit(UNDECLAREDIDENTIFIER);
 		}
 
@@ -1994,8 +1994,8 @@ void matchToken(char unsigned expected)
 	}
 	else
 	{
-		printf("%lu:token nao esperado %s.\n", line, reg.lexem);
-		exit(UNSPECTEDTOKEN);
+		printf("%lu:%s.\n", line, unexpectedToken);
+		exit(UNEXPECTEDTOKEN);
 	}
 }
 

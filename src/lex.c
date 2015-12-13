@@ -48,7 +48,7 @@ int lex()
 
 		if (!(in(c, letters, LETTERS) || in(c, digits, DIGITS) || in(c, symbols, SYMBOLS) || in(c, others, OTHERS) || in(c, halfsymbols, HALFSYMBOLS)))
 		{
-			printf("%lu:caractere invalido.\n", line);
+			printf("%lu:%s.\n", line, invalidChar);
 			exit(INVALIDCHAR);
 		}
 
@@ -111,8 +111,8 @@ int lex()
 				{
 					if (lastType == 250)
 					{
-						printf("%lu:fim de arquivo nao esperado.\n", line);
-						exit(UNSPECTEDEOF);
+						printf("%lu: %s.\n", line, unexpectedEof);
+						exit(UNEXPECTEDEOF);
 					}
 
 					final = 1;
@@ -123,7 +123,7 @@ int lex()
 					final = 1;
 					state = INITIAL;
 					reg.lexem[i++] = c;
-					printf("%lu:lexema nao identificado %s.\n", line, reg.lexem);
+					printf("%lu:%s [%s].\n", line, unidentifiedLex, reg.lexem);
 					exit(UNIDENTIFIEDLEX);
 				}
 				break;
@@ -198,7 +198,7 @@ int lex()
 				else
 				{
 					reg.lexem[i++] = c;
-					printf("%lu:lexema nao identificado %s.\n", line, reg.lexem);
+					printf("%lu:%s [%s].\n", line, unidentifiedLex, reg.lexem);
 					exit(UNIDENTIFIEDLEX);
 				}
 				break;
@@ -215,7 +215,7 @@ int lex()
 				else
 				{
 					reg.lexem[i++] = c;
-					printf("%lu:lexema nao identificado %s.\n", line, reg.lexem);
+					printf("%lu:%s [%s].\n", line, unidentifiedLex, reg.lexem);
 					exit(UNIDENTIFIEDLEX);
 				}
 				break;
@@ -231,8 +231,8 @@ int lex()
 				}
 				else if (c == ENOF || c == '\n')
 				{
-					printf("%lu:fim de arquivo nao esperado.\n", line);
-					exit(UNSPECTEDEOF);
+					printf("%lu: %s.\n", line, unexpectedEof);
+					exit(UNEXPECTEDEOF);
 				}
 				else
 				{
@@ -265,7 +265,7 @@ int lex()
 				}
 				else
 				{
-					printf("%lu:lexema nao identificado %s.\n", line, reg.lexem);
+					printf("%lu:%s [%s].\n", line, unidentifiedLex, reg.lexem);
 					exit(UNIDENTIFIEDLEX);
 				}
 				break;
@@ -292,8 +292,8 @@ int lex()
 				}
 				else if (c == ENOF)
 				{
-					printf("%lu:fim de arquivo nao esperado.\n", line);
-					exit(UNSPECTEDEOF);
+					printf("%lu: %s.\n", line, unexpectedEof);
+					exit(UNEXPECTEDEOF);
 				}
 				else if (c == '\n')
 				{
@@ -308,8 +308,8 @@ int lex()
 				}
 				else if (c == ENOF)
 				{
-					printf("%lu:fim de arquivo nao esperado.\n", line);
-					exit(UNSPECTEDEOF);
+					printf("%lu: %s.\n", line, unexpectedEof);
+					exit(UNEXPECTEDEOF);
 				}
 				else if (c == '*')
 				{

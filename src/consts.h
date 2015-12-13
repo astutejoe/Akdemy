@@ -3,12 +3,21 @@
 
 #define SUCCESS 0
 #define INVALIDCHAR 1
+#define invalidChar "Invalid character"
 #define UNIDENTIFIEDLEX 2
-#define UNSPECTEDEOF 3
-#define UNSPECTEDTOKEN 4
+#define unidentifiedLex "Unidetified lexem"
+#define UNEXPECTEDEOF 3
+#define unexpectedEof "End of file unexpected"
+#define UNEXPECTEDTOKEN 4
+#define unexpectedToken "Token unexpected"
 #define INCOMPATIBLETYPES 5
+#define incompatibleTypes "Incompatible types"
 #define ALREADYDECLARED 6
+#define alreadyDeclared "Identifier already declared"
 #define UNDECLAREDIDENTIFIER 7
+#define undeclaredIdentifier "Identifier undeclared"
+#define INCOMPATIBLECLASS 8
+#define incompatibleClass "Class incompatible, you are probably trying to change a constant value "
 
 #define NOTFOUND -1
 #define TOKEN 1
