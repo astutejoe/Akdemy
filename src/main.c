@@ -95,7 +95,7 @@ void declaration(unsigned int* address)
 			case INTTOK:
 				reg.entry->type=INT;
 				type=INT;
-				sprintf(variables, "%s\t%s:\tresw 1\n", variables, reg.lexem);
+				sprintf(variables, "%s\t%s:\tresd 1\n", variables, reg.lexem);
 				break;
 			case BYTETOK:
 				reg.entry->type=BYTE;
@@ -177,7 +177,7 @@ void declaration(unsigned int* address)
 					sprintf(variables, "%s\t%s:\tresb 65536\n", variables, reg.lexem);
 					break;
 				case INT:
-					sprintf(variables, "%s\t%s:\tresw 1\n", variables, reg.lexem);
+					sprintf(variables, "%s\t%s:\tresd 1\n", variables, reg.lexem);
 					*address = *address + 2;
 					break;
 				default:
@@ -223,11 +223,11 @@ void declaration(unsigned int* address)
 					sprintf(attribuitions, "%s\tmov al, 0\n", attribuitions);
 					sprintf(attribuitions, "%s\tmov [ebx], al\n", attribuitions);
 				} else if (type == INT) {
-					sprintf(attribuitions, "%s\tmov ax, %s%d\n\tmov [temporaries+%u], ax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->address);
+					sprintf(attribuitions, "%s\tmov eax, %s%d\n\tmov [%s], eax\n", attribuitions, (signal == MINUS ? "-" : "+"),  atoi(reg.lexem), entry->lexem);
 				} else if (type == BYTE) {
-					sprintf(attribuitions, "%s\tmov al, %d\n\tmov [temporaries+%u], al\n", attribuitions, atoi(reg.lexem), entry->address);
+					sprintf(attribuitions, "%s\tmov al, %d\n\tmov [%s], al\n", attribuitions, atoi(reg.lexem), entry->lexem);
 				} else if (type == BOOL) {
-					sprintf(attribuitions, "%s\tmov al, %d\n\tmov [temporaries+%u], al\n", attribuitions, strncmp(reg.lexem,"TRUE", 4) == 0 ? 0xFF : 0x00, entry->address);
+					sprintf(attribuitions, "%s\tmov al, %d\n\tmov [%s], al\n", attribuitions, strncmp(reg.lexem,"TRUE", 4) == 0 ? 0xFF : 0x00, entry->lexem);
 				}
 
 				matchToken(LITERAL);
@@ -824,7 +824,7 @@ void command()
 			fprintf(output, "\tadd ebx, 1\n");
 			fprintf(output, "\tadd edx, 1\n");
 			fprintf(output, "\tjmp %s\n", loop);
-			fprintf(output, "\t%s:\n", end);
+			fprintf(output, "%s:\n", end);
 			fprintf(output, "\tmov eax, 4\n");
 			fprintf(output, "\tmov ebx, 1\n");
 			fprintf(output, "\tmov ecx, temporaries+%u\n", address);
@@ -943,7 +943,7 @@ void command()
 				fprintf(output, "\tadd ebx, 1\n");
 				fprintf(output, "\tadd edx, 1\n");
 				fprintf(output, "\tjmp %s\n", loop);
-				fprintf(output, "\t%s:\n", end);
+				fprintf(output, "%s:\n", end);
 				fprintf(output, "\tmov eax, 4\n");
 				fprintf(output, "\tmov ebx, 1\n");
 				fprintf(output, "\tmov ecx, temporaries+%u\n", address);
@@ -2002,7 +2002,7 @@ void matchToken(char unsigned expected)
 char* newLabel() {
 	int digits = label == 0 ? 1 : floor(log10(abs(label))) + 1;
 	char* lbl = malloc(sizeof(char) * (digits + 2));
-	sprintf(lbl, "R%d", label);
+	sprintf(lbl, "Lbl%d", label);
 	label++;
 	return lbl;
 }

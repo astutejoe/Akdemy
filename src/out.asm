@@ -2,65 +2,121 @@ section	.data
 	endl:	 db 0x0A
 section	.bss
 	temporaries:	resb 8388608
-	y:	resb 65536
+	i:	resd 1
+	a:	resd 1
 section	.text
 global	_start
 _start:
-	mov ebx, y
-	mov al, 79
-	mov [ebx], al
-	add ebx, 1
-	mov al, 108
-	mov [ebx], al
-	add ebx, 1
-	mov al, 97
-	mov [ebx], al
-	add ebx, 1
-	mov al, 32
-	mov [ebx], al
-	add ebx, 1
-	mov al, 77
-	mov [ebx], al
-	add ebx, 1
-	mov al, 117
-	mov [ebx], al
-	add ebx, 1
-	mov al, 110
-	mov [ebx], al
-	add ebx, 1
-	mov al, 100
-	mov [ebx], al
-	add ebx, 1
-	mov al, 111
-	mov [ebx], al
-	add ebx, 1
+	mov al, 5
+	mov [temporaries+0], al
+	mov al, [temporaries+0]
+	mov ah, 0
+	mov [temporaries+16384], al
+	mov [temporaries+16385], ah
+	mov eax, [a]
+	mov [temporaries+0], eax
+	mov al, [temporaries+0]
+	mov ah, [temporaries+1]
+	mov [temporaries+16384], al
+	mov [temporaries+16385], ah
+Lbl1:
+	mov eax, [i]
+	mov [temporaries+0], eax
+	mov al, 1
+	mov [temporaries+4], al
+	mov al, [temporaries+0]
+	mov ah, [temporaries+1]
+	mov bl, [temporaries+4]
+	mov bh, 0
+	cmp ax, bx
+	jg Lbl3
 	mov al, 0
-	mov [ebx], al
+	jmp Lbl4
+Lbl3:
+	mov al, 255
+Lbl4:
+	mov [temporaries+4], al
+	mov al, [temporaries+4]
+	mov ah, 0
+	cmp ax, 0
+	je Lbl2
+	mov eax, [a]
+	mov [temporaries+5], eax
+	mov eax, [i]
+	mov [temporaries+9], eax
+	mov al, 1
+	mov [temporaries+13], al
+	mov al, [temporaries+9]
+	mov ah, [temporaries+10]
+	mov bl, [temporaries+13]
+	mov bh, 0
+	sub ax, bx
+	mov [temporaries+13], al
+	mov [temporaries+14], ah
+	mov al, [temporaries+5]
+	mov ah, [temporaries+6]
+	mov bl, [temporaries+13]
+	mov bh, [temporaries+14]
+	imul bx
+	mov [temporaries+13], al
+	mov [temporaries+14], ah
+	mov al, [temporaries+13]
+	mov ah, [temporaries+14]
+	mov [temporaries+16384], al
+	mov [temporaries+16385], ah
+	mov eax, [i]
+	mov [temporaries+5], eax
+	mov al, 1
+	mov [temporaries+9], al
+	mov al, [temporaries+5]
+	mov ah, [temporaries+6]
+	mov bl, [temporaries+9]
+	mov bh, 0
+	sub ax, bx
+	mov [temporaries+9], al
+	mov [temporaries+10], ah
+	mov al, [temporaries+9]
+	mov ah, [temporaries+10]
+	mov [temporaries+16384], al
+	mov [temporaries+16385], ah
+	jmp Lbl1
+Lbl2:
+	mov eax, [a]
+	mov [temporaries+0], eax
+	mov edi, temporaries+4
 	mov eax, 0
-	mov ebx, 0
-R2:
-	mov cl, [y+ebx]
-	cmp cl, 0x00
-	je R1
-	mov [temporaries+eax], cl
-	add eax, 1
-	add ebx, 1
-	jmp R2
-R1:
-	mov [temporaries+eax], cl
-	mov edx, 0
-	mov ebx, temporaries+0
-R3:
-	mov al, [ebx]
-	cmp al, 0x00
-	je R4
-	add ebx, 1
-	add edx, 1
-	jmp R3
-	R4:
+	mov eax, [temporaries+0]
+	mov cx, 0
+	mov esi, 0
+	cmp eax, 0
+	jge Lbl5
+	mov dl, 0x2D
+	mov [edi], dl
+	add edi, 1
+	neg eax
+	add esi, 1
+Lbl5:
+	mov ebx, 10
+Lbl6:
+	add cx, 1
+	add esi, 1
+	mov dx, 0
+	idiv ebx
+	push dx
+	cmp eax, 0
+	jne Lbl6
+Lbl7:
+	pop dx
+	add dx, 48
+	mov [edi], dl
+	add edi, 1
+	add cx, -1
+	cmp cx, 0
+	jne Lbl7
 	mov eax, 4
 	mov ebx, 1
-	mov ecx, temporaries+0
+	mov ecx, temporaries+4
+	mov edx, esi
 	int 0x80
 	mov eax, 4
 	mov ebx, 1
