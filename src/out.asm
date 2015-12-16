@@ -2,7 +2,7 @@ section	.data
 	endl:	 db 0x0A
 section	.bss
 	temporaries:	resb 8388608
-	x:	resb 65536
+	x:	resb 1
 section	.text
 global	_start
 _start:
@@ -11,44 +11,56 @@ _start:
 	mov ecx, temporaries+0
 	mov edx, 65536
 	int 0x80
-	mov eax, x
-	mov ebx, temporaries+0
-Lbl2:
-	mov cl, [ebx]
-	cmp cl, 0x0A
-	je Lbl1
-	mov [eax], cl
-	add eax, 1
-	add ebx, 1
-	jmp Lbl2
+	mov edi, temporaries+0
+	mov al, 0
+	mov cl, 10
 Lbl1:
-	mov cl, 0x00
-	mov [eax], cl
-	mov eax, temporaries+65536
-	mov ebx, x
-Lbl4:
-	mov cl, [ebx]
-	cmp cl, 0x00
-	je Lbl3
-	mov [eax], cl
-	add eax, 1
-	add ebx, 1
-	jmp Lbl4
+	mov bl, [edi]
+	cmp bl, 0x0A
+	je Lbl2
+	mul cl
+	add bl, -48
+	add al, bl
+	add edi, 1
+	jmp Lbl1
+Lbl2:
+	mov [x], al
+	mov al, [x]
+	mov [temporaries+65536], al
+	mov edi, temporaries+65537
+	mov eax, 0
+	mov al, [temporaries+65536]
+	mov cx, 0
+	mov esi, 0
+	cmp eax, 0
+	jge Lbl3
+	mov dl, 0x2D
+	mov [edi], dl
+	add edi, 1
+	neg eax
+	add esi, 1
 Lbl3:
-	mov [eax], cl
+	mov ebx, 10
+Lbl4:
+	add cx, 1
+	add esi, 1
 	mov edx, 0
-	mov ebx, temporaries+65536
+	idiv ebx
+	push dx
+	cmp eax, 0
+	jne Lbl4
 Lbl5:
-	mov al, [ebx]
-	cmp al, 0x00
-	je Lbl6
-	add ebx, 1
-	add edx, 1
-	jmp Lbl5
-Lbl6:
+	pop dx
+	add dx, 48
+	mov [edi], dl
+	add edi, 1
+	add cx, -1
+	cmp cx, 0
+	jne Lbl5
 	mov eax, 4
 	mov ebx, 1
-	mov ecx, temporaries+65536
+	mov ecx, temporaries+65537
+	mov edx, esi
 	int 0x80
 	mov eax, 4
 	mov ebx, 1

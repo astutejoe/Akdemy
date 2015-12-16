@@ -501,20 +501,20 @@ void command()
 		{
 			char* loop = newLabel();
 			char* end = newLabel();
-			fprintf(output, "\tmov di, %u\n", buffer+2);
+			fprintf(output, "\tmov edi, temporaries+%u\n", buffer);
 			fprintf(output, "\tmov al, 0\n");
 			fprintf(output, "\tmov cl, 10\n");
 			fprintf(output, "%s:\n", loop);
-			fprintf(output, "\tmov bl, DS:[di]\n");
-			fprintf(output, "\tcmp bl, 0Dh\n");
+			fprintf(output, "\tmov bl, [edi]\n");
+			fprintf(output, "\tcmp bl, 0x0A\n");
 			fprintf(output, "\tje %s\n", end);
 			fprintf(output, "\tmul cl\n");
 			fprintf(output, "\tadd bl, -48\n");
 			fprintf(output, "\tadd al, bl\n");
-			fprintf(output, "\tadd di, 1\n");
+			fprintf(output, "\tadd edi, 1\n");
 			fprintf(output, "\tjmp %s\n", loop);
 			fprintf(output, "%s:\n", end);
-			fprintf(output, "\tmov [temporaries+%u], al\n", reg.entry->address);
+			fprintf(output, "\tmov [%s], al\n", reg.lexem);
 		}
 		else if (reg.type == INT)
 		{
@@ -608,7 +608,7 @@ void command()
 			fprintf(output, "%s:\n", digits);
 			fprintf(output, "\tadd cx, 1\n");
 			fprintf(output, "\tadd esi, 1\n");
-			fprintf(output, "\tmov dx, 0\n");
+			fprintf(output, "\tmov edx, 0\n");
 			fprintf(output, "\tidiv ebx\n");
 			fprintf(output, "\tpush dx\n");
 			fprintf(output, "\tcmp eax, 0\n");
@@ -727,7 +727,7 @@ void command()
 				fprintf(output, "%s:\n", digits);
 				fprintf(output, "\tadd cx, 1\n");
 				fprintf(output, "\tadd esi, 1\n");
-				fprintf(output, "\tmov dx, 0\n");
+				fprintf(output, "\tmov edx, 0\n");
 				fprintf(output, "\tidiv ebx\n");
 				fprintf(output, "\tpush dx\n");
 				fprintf(output, "\tcmp eax, 0\n");
@@ -857,7 +857,7 @@ void command()
 			fprintf(output, "%s:\n", digits);
 			fprintf(output, "\tadd cx, 1\n");
 			fprintf(output, "\tadd esi, 1\n");
-			fprintf(output, "\tmov dx, 0\n");
+			fprintf(output, "\tmov edx, 0\n");
 			fprintf(output, "\tidiv ebx\n");
 			fprintf(output, "\tpush dx\n");
 			fprintf(output, "\tcmp eax, 0\n");
