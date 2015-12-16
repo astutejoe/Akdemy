@@ -68,9 +68,6 @@
 #define INT 2
 #define BOOL 3
 
-/* TEMPORARY TYPE */
-#define BUFFER 4
-
 typedef struct lexicalRegister {
 	char lexem[256];
 	unsigned char token;

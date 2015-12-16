@@ -1,6 +1,5 @@
-string x = "Gabriel";
-string y = "Gabriel";
-
+string x;
 begin
-	writeln x==y;
+	readln x;
+	writeln x;
 end
