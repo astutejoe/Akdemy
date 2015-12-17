@@ -565,14 +565,14 @@ void command()
 
 			fprintf(output, "\tmov edx, 0\n");
 			fprintf(output, "\tmov ebx, temporaries+%u\n", address);
-			fprintf(output, "%s\n", loop);
+			fprintf(output, "%s:\n", loop);
 			fprintf(output, "\tmov al, [ebx]\n");
 			fprintf(output, "\tcmp al, 0x00\n");
-			fprintf(output, "\tje end\n");
+			fprintf(output, "\tje %s\n", end);
 			fprintf(output, "\tadd ebx, 1\n");
 			fprintf(output, "\tadd edx, 1\n");
-			fprintf(output, "\tjmp loop\n");
-			fprintf(output, "\t%s:\n", end);
+			fprintf(output, "\tjmp %s\n", loop);
+			fprintf(output, "%s:\n", end);
 			fprintf(output, "\tmov eax, 4\n");
 			fprintf(output, "\tmov ebx, 1\n");
 			fprintf(output, "\tmov ecx, temporaries+%u\n", address);
