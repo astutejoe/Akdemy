@@ -17,6 +17,6 @@ Entry* searchLexem(char* lexem);
 int printSymbolTable();
 int initTable();
 
-#define KEYWORDS 33;
+#define KEYWORDS 32
 
 #endif

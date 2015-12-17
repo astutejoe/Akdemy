@@ -233,8 +233,6 @@ void declaration(unsigned int* address)
 				matchToken(LITERAL);
 			}
 		}
-
-		matchToken(SEMICOLON);
 	}
 	else
 	{
@@ -295,7 +293,6 @@ void declaration(unsigned int* address)
 		}
 
 		matchToken(LITERAL);
-		matchToken(SEMICOLON);
 	}
 }
 
@@ -379,8 +376,6 @@ void command()
 			fprintf(output, "\tmov al, [temporaries+%u]\n\tmov [%s], al\n", address, entry->lexem);
 		}
 
-		matchToken(SEMICOLON);
-
 		stack = temporariesStack;
 
 #ifdef DEBUG
@@ -459,13 +454,6 @@ void command()
 				command();
 		}
 		fprintf(output, "%s:\n", end);
-	}
-	else if(reg.token == SEMICOLON)
-	{
-		matchToken(SEMICOLON);
-#ifdef DEBUG
-	printf("\n");
-#endif
 	}
 	else if(reg.token == READLN)
 	{
@@ -548,7 +536,6 @@ void command()
 		}
 
 		matchToken(ID);
-		matchToken(SEMICOLON);
 #ifdef DEBUG
 	printf("\n");
 #endif
@@ -792,8 +779,6 @@ void command()
 				fprintf(output, "\tint 0x80\n");
 			}
 		}
-
-		matchToken(SEMICOLON);
 
 		stack = temporariesStack;
 #ifdef DEBUG
@@ -1041,8 +1026,6 @@ void command()
 				fprintf(output, "\tint 0x80\n");
 			}
 		}
-
-		matchToken(SEMICOLON);
 
 		fprintf(output, "\tmov eax, 4\n");
 		fprintf(output, "\tmov ebx, 1\n");

@@ -1,14 +1,13 @@
-int i, a;
+int i, a
 
 begin
-	/*writeln "Escreva um numero: ";
-	readln a;*/
-	a = 5;
-	i = a;
+	writeln "Escreva um numero: "
+	readln a
+	i = a
 	while i > 1
 	begin
-		a = a * (i - 1);
-		i = i - 1;
+		a = a * (i - 1)
+		i = i - 1
 	end
-	writeln a;
+	writeln a
 end
