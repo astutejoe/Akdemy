@@ -1,7 +1,7 @@
 int int_byte = 20, int_int = 100000;
 byte byte1 = 120, byte2 = 2;
 string str1 = "hello", str2 = "world";
-boolean bool1 = TRUE, bool2 = FALSE;
+bool bool1 = TRUE, bool2 = FALSE;
 
 begin
 	if int_int == int_int
@@ -238,4 +238,6 @@ begin
 		writeln "BOOLEAN NOT: NOT OK";
 	end
 
+	writeln "If you are reading this, writing strings are ok";
+	writeln "5000+5000=", (5000+5000);
 end

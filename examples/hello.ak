@@ -1,5 +1,8 @@
-byte x;
+string x;
 begin
-	readln x;
+	x = "Hello World!";
 	writeln x;
+	writeln "Write your name: ";
+	readln x;
+	writeln "Your name is ", x, " :3";
 end

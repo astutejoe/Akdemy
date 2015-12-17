@@ -7,7 +7,7 @@
 
 Entry table[HASHSIZE];
 
-char* keywords[] = {"final","else","(","<=",";","TRUE","int","and",")",",","begin","FALSE","byte","or","<","+","end","boolean","string","not",">","-","readln","while","==","!=","*","write","if","=",">=","/","writeln"};
+char* keywords[] = {"final","else","(","<=",";","TRUE","int","and",")",",","begin","FALSE","byte","or","<","+","end","bool","string","not",">","-","readln","while","==","!=","*","write","if","=",">=","/","writeln"};
 unsigned char keywordsTokens[] = {FINAL, ELSE, LEFTPAR, MINEQ, SEMICOLON, LITERAL, INTTOK, AND, RIGHTPAR, COMMA, BEGIN, LITERAL, BYTETOK, OR , MINOR, PLUS, END , BOOLEANTOK, STRINGTOK, NOT, GREATER, MINUS, READLN, WHILE , EQUAL, DIFF, MULT, WRITE, IF , ATTR, GREATEQ, DIVIDE, WRITELN};
 
 int initTable()
