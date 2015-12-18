@@ -14,9 +14,7 @@ begin
 			tmp = t2
 			t2 = t1 + t2
 			write t2
-			if i < (n-1) begin
-				write ","
-			end
+			if i < (n-1) write ","
 			i = i + 1
 			t1 = tmp
 		end
